@@ -40,3 +40,8 @@ out/
 .env
 .env.*
 !.env.example
+
+.gradle/
+build/
+.idea/
+*.iml
