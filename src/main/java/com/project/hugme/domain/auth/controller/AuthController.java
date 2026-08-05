@@ -37,12 +37,6 @@ public class AuthController {
 
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<Long> getMyInfo(
-            @AuthenticationPrincipal CustomUserDetails userDetails
-    ) {
-        return ResponseEntity.ok(userDetails.getUserId());
-    }
 
 
 
