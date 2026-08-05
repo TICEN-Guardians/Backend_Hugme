@@ -19,7 +19,7 @@ public class User{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
-    private Long id;
+    private Long userId;
 
     @Column(unique=true,nullable = false)
     private String email;
@@ -48,5 +48,22 @@ public class User{
 
     @Column(name="deleted_at")
     private Instant deletedAt;
+
+    public static User createLocalUser(
+            String email,
+            String encodedPassword,
+            String name
+    ){
+        User user = new User();
+        user.email = email;
+        user.password=encodedPassword;
+        user.name=name;
+        user.role=UserRole.USER;
+        user.status=UserStatus.ACTIVE;
+
+        return user;
+    }
+
+
 
 }
