@@ -65,5 +65,11 @@ public class User{
     }
 
 
+    public void withdraw() {
+        this.status = UserStatus.WITHDRAWN;
+        this.deletedAt = Instant.now();
+    }
+
+
 
 }

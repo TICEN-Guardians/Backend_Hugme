@@ -1,5 +1,6 @@
 package com.project.hugme.global.security.handler;
 
+import com.project.hugme.global.exception.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,12 +28,11 @@ public class CustomAccessDeniedHandler
             AccessDeniedException accessDeniedException
     ) throws IOException {
 
-        SecurityErrorResponse errorResponse =
-                new SecurityErrorResponse(
-                        HttpStatus.FORBIDDEN.value(),
-                        "FORBIDDEN",
-                        "접근 권한이 없습니다."
-                );
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                "FORBIDDEN",
+                "접근 권한이 없습니다."
+        );
 
         response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

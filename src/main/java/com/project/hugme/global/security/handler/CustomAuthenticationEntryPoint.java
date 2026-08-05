@@ -1,5 +1,6 @@
 package com.project.hugme.global.security.handler;
 
+import com.project.hugme.global.exception.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,12 +28,11 @@ public class CustomAuthenticationEntryPoint
             AuthenticationException authException
     ) throws IOException {
 
-        SecurityErrorResponse errorResponse =
-                new SecurityErrorResponse(
-                        HttpStatus.UNAUTHORIZED.value(),
-                        "UNAUTHORIZED",
-                        "인증이 필요합니다."
-                );
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                "UNAUTHORIZED",
+                "인증이 필요합니다."
+        );
 
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
