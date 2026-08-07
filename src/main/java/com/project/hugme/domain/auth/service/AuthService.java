@@ -16,6 +16,7 @@ import com.project.hugme.domain.user.repository.UserRepository;
 import com.project.hugme.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.antlr.runtime.Token;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -80,7 +81,7 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
     }
 
     @Transactional
-    public LoginResponse login(LoginRequest request){
+    public TokenPair login(LoginRequest request){
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(UserNotFoundException::new);
 
@@ -114,11 +115,7 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
 
         saveRefreshToken(user, refreshToken, expiresAt);
 
-        return LoginResponse.of(
-
-                accessToken,
-                refreshToken
-        );
+        return new TokenPair(accessToken, refreshToken);
 
     }
     private void saveRefreshToken(
@@ -144,10 +141,9 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
     }
 
     @Transactional
-    public TokenReissueResponse reissue(
-            TokenReissueRequest request
+    public TokenPair reissue(
+            String requestToken
     ){
-        String requestToken = request.refreshToken();
         // 1. 서명, 만료시간, 토큰 타입 검증
         jwtTokenProvider.validateRefreshToken(requestToken);
 
@@ -205,11 +201,7 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
 
         savedToken.update(newRefreshToken,jwtTokenProvider.getRefreshTokenExpiresAt());
 
-                return TokenReissueResponse.of(
-                        newAccessToken,
-                        newRefreshToken
-
-                );
+                return new TokenPair(newAccessToken,newRefreshToken);
 
     }
 
