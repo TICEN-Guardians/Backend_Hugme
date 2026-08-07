@@ -1,5 +1,6 @@
 package com.project.hugme.domain.user.service;
 
+import com.project.hugme.domain.auth.repository.RefreshTokenRepository;
 import com.project.hugme.domain.user.dto.MyInfoResponse;
 import com.project.hugme.domain.user.entity.User;
 import com.project.hugme.domain.user.entity.UserStatus;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public MyInfoResponse getMyInfo(Long userId) {
         User user = findActiveUser(userId);
@@ -28,6 +30,8 @@ public class UserService {
         User user = findActiveUser(userId);
 
         user.withdraw();
+
+        refreshTokenRepository.deleteByUserUserId(userId);
     }
 
 
