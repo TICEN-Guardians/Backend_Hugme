@@ -1,5 +1,6 @@
 package com.project.hugme.global.exception;
 
+import com.project.hugme.domain.auth.exception.RefreshTokenReuseException;
 import com.project.hugme.domain.user.exception.AlreadyWithdrawnUserException;
 import com.project.hugme.domain.user.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -44,6 +45,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(errorResponse);
+    }
+
+    @ExceptionHandler(RefreshTokenReuseException.class)
+    public ResponseEntity<ErrorResponse> handleRefreshTokenReuse(
+            RefreshTokenReuseException e
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(
+                        401,
+                        "REFRESH_TOKEN_REUSED",
+                        e.getMessage()
+                ));
     }
 
     /**
