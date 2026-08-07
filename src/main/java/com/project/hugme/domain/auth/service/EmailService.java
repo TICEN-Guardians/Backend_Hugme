@@ -59,4 +59,47 @@ public class EmailService {
             );
         }
     }
+
+    public void sendRefreshTokenReuseAlert(String email) {
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+
+            MimeMessageHelper helper =
+                    new MimeMessageHelper(message, false, "UTF-8");
+
+            helper.setFrom(from);
+            helper.setTo(email);
+            helper.setSubject("[HUGME] 비정상적인 로그인 세션이 감지되었습니다.");
+
+            String content = """
+                <h2>HUGME 보안 알림</h2>
+
+                <p>
+                    이전 로그인 세션에서 발급된 인증 토큰의
+                    재사용이 감지되었습니다.
+                </p>
+
+                <p>
+                    계정 보호를 위해 현재 Refresh Token을
+                    폐기하였습니다.
+                </p>
+
+                <p>
+                    본인이 시도한 것이 아니라면
+                    다시 로그인하고 계정 정보를 확인해주세요.
+                </p>
+                """;
+
+            helper.setText(content, true);
+
+            mailSender.send(message);
+
+        } catch (MessagingException e) {
+            throw new IllegalStateException(
+                    "보안 알림 이메일 발송에 실패했습니다.",
+                    e
+            );
+        }
+    }
 }

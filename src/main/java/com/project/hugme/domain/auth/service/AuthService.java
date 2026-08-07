@@ -14,10 +14,9 @@ import com.project.hugme.domain.user.exception.UserNotFoundException;
 import com.project.hugme.domain.user.exception.WithdrawnUserException;
 import com.project.hugme.domain.user.repository.UserRepository;
 import com.project.hugme.global.security.jwt.JwtTokenProvider;
-import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -81,17 +81,24 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
 
     @Transactional
     public LoginResponse login(LoginRequest request){
-        Authentication authentication;
-        try {
-            authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.email(),
-                            request.password()
-                    )
-            );
-        } catch (DisabledException e) {
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(UserNotFoundException::new);
+
+        if (user.getStatus() == UserStatus.PENDING) {
             throw new EmailVerificationRequiredException();
         }
+
+        if (user.getStatus() == UserStatus.WITHDRAWN) {
+            throw new WithdrawnUserException();
+        }
+
+        Authentication authentication =
+                authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                request.email(),
+                                request.password()
+                        )
+                );
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
@@ -103,8 +110,7 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
         Instant expiresAt =
                 jwtTokenProvider.getRefreshTokenExpiresAt();
 
-        User user = userRepository.findById(userDetails.getUserId())
-                .orElseThrow(UserNotFoundException::new);
+
 
         saveRefreshToken(user, refreshToken, expiresAt);
 
@@ -152,13 +158,6 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
         RefreshToken savedToken = refreshTokenRepository.findByUserUserId(userId)
                 .orElseThrow(()-> new IllegalArgumentException("저장된 Refresh Token이 없습니다."));
 
-        if (!savedToken.getTokenValue().equals(requestToken)) {
-
-            // 현재 유효한 Refresh Token까지 폐기
-            refreshTokenRevocationService.revoke(userId);
-
-            throw new RefreshTokenReuseException();
-        }
 
         // 5. 현재 사용자 조회
         User user = userRepository.findById(userId)
@@ -167,6 +166,28 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
                                 "사용자를 찾을 수 없습니다."
                         )
                 );
+
+        if (!savedToken.getTokenValue().equals(requestToken)) {
+
+            // 현재 유효한 Refresh Token까지 폐기
+            refreshTokenRevocationService.revoke(userId);
+
+            // 보안 알림 메일 발송
+            try {
+                emailService.sendRefreshTokenReuseAlert(
+                        user.getEmail()
+                );
+            } catch (Exception e) {
+                log.warn(
+                        "Refresh Token 재사용 알림 이메일 발송 실패. userId={}",
+                        userId,
+                        e
+                );
+            }
+
+            throw new RefreshTokenReuseException();
+        }
+
 
 
 
