@@ -3,12 +3,17 @@ package com.project.hugme.domain.auth.controller;
 import com.project.hugme.domain.auth.dto.*;
 import com.project.hugme.domain.auth.security.CustomUserDetails;
 import com.project.hugme.domain.auth.service.AuthService;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -29,19 +34,46 @@ public class AuthController {
     public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request
     ){
-        LoginResponse response = authService.login(request);
-        return ResponseEntity.ok(response);
+        TokenPair tokenPair = authService.login(request);
 
+        ResponseCookie cookie = ResponseCookie
+                .from("refreshToken", tokenPair.refreshToken())
+                .httpOnly(true)
+                .secure(false)   //http 기준
+                .path("/api/auth")
+                .maxAge(Duration.ofDays(7))
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(LoginResponse.of(tokenPair.accessToken()));
     }
 
     @PostMapping("/token/reissue")
     public ResponseEntity<TokenReissueResponse> reissue(
-            @Valid @RequestBody TokenReissueRequest request
+            @Parameter(hidden = true)
+            @CookieValue("refreshToken") String refreshToken
     ) {
-        TokenReissueResponse response =
-                authService.reissue(request);
+        TokenPair tokenPair =
+                authService.reissue(refreshToken);
 
-        return ResponseEntity.ok(response);
+        ResponseCookie cookie = ResponseCookie
+                .from("refreshToken", tokenPair.refreshToken())
+                .httpOnly(true)
+                .secure(false)   // 로컬 HTTP
+                .path("/api/auth")
+                .maxAge(Duration.ofDays(7))
+                .build();
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        cookie.toString()
+                )
+                .body(
+                        TokenReissueResponse.of(tokenPair.accessToken())
+
+                );
     }
 
     @GetMapping("/mail/verify")
@@ -61,7 +93,21 @@ public class AuthController {
     ){
         authService.logout(userId);
 
-        return ResponseEntity.noContent().build();
+        // 브라우저 Refresh Token Cookie 삭제
+        ResponseCookie deleteCookie = ResponseCookie
+                .from("refreshToken", "")
+                .httpOnly(true)
+                .secure(false)       // 로컬 HTTP
+                .path("/api/auth")   // 생성할 때와 동일해야 함
+                .maxAge(0)           // 즉시 만료 = 삭제
+                .build();
+
+        return ResponseEntity.noContent()
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        deleteCookie.toString()
+                )
+                .build();
     }
 
 
