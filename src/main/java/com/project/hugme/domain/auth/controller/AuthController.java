@@ -3,7 +3,9 @@ package com.project.hugme.domain.auth.controller;
 import com.project.hugme.domain.auth.dto.*;
 import com.project.hugme.domain.auth.security.CustomUserDetails;
 import com.project.hugme.domain.auth.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -18,10 +20,18 @@ import java.time.Duration;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(
+        name = "인증 API",
+        description = "회원가입, 로그인, 이메일 인증 및 JWT 토큰 관리 API"
+)
 public class AuthController {
 
     private final AuthService authService;
 
+    @Operation(
+            summary = "회원가입",
+            description = "일반 회원가입을 진행하고 이메일 인증 메일을 발송합니다."
+    )
     @PostMapping("/signup")
     public ResponseEntity<SignUpResponse> signUp(
             @Valid @RequestBody SignUpRequest req
@@ -30,6 +40,12 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(
+            summary = "로그인",
+            description = "이메일과 비밀번호로 로그인합니다. " +
+                    "Access Token은 응답 Body로 반환하고, " +
+                    "Refresh Token은 HttpOnly Cookie로 발급합니다."
+    )
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request
@@ -49,6 +65,11 @@ public class AuthController {
                 .body(LoginResponse.of(tokenPair.accessToken()));
     }
 
+    @Operation(
+            summary = "Access Token 재발급",
+            description = "HttpOnly Cookie의 Refresh Token을 검증하고 " +
+                    "새로운 Access Token과 Refresh Token을 발급합니다."
+    )
     @PostMapping("/token/reissue")
     public ResponseEntity<TokenReissueResponse> reissue(
             @Parameter(hidden = true)
@@ -76,6 +97,10 @@ public class AuthController {
                 );
     }
 
+    @Operation(
+            summary = "이메일 인증",
+            description = "이메일로 전달된 인증 토큰을 검증하고 회원 상태를 ACTIVE로 변경합니다."
+    )
     @GetMapping("/mail/verify")
     public ResponseEntity<String> verifyEmail(
 @RequestParam String token ){
@@ -86,7 +111,10 @@ public class AuthController {
         );
 
     }
-
+    @Operation(
+            summary = "로그아웃",
+            description = "DB에 저장된 Refresh Token을 폐기하고 HttpOnly Cookie를 삭제합니다."
+    )
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             @AuthenticationPrincipal(expression = "userId") Long userId
