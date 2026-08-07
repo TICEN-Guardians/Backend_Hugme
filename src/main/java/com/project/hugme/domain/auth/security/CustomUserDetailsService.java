@@ -1,6 +1,8 @@
 package com.project.hugme.domain.auth.security;
 
 import com.project.hugme.domain.user.entity.User;
+import com.project.hugme.domain.user.entity.UserStatus;
+import com.project.hugme.domain.user.exception.AlreadyWithdrawnUserException;
 import com.project.hugme.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
