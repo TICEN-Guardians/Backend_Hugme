@@ -38,6 +38,9 @@ public class User{
     @Column(name= "status",nullable=false,length=20)
     private UserStatus status = UserStatus.ACTIVE;
 
+    @Column(name = "verification_token", length = 255)
+    private String verificationToken;
+
     @CreationTimestamp
     @Column(name="created_at",nullable=false,updatable=false)
     private Instant createdAt;
@@ -52,14 +55,16 @@ public class User{
     public static User createLocalUser(
             String email,
             String encodedPassword,
-            String name
+            String name,
+             String verificationToken
     ){
         User user = new User();
         user.email = email;
         user.password=encodedPassword;
         user.name=name;
         user.role=UserRole.USER;
-        user.status=UserStatus.ACTIVE;
+        user.verificationToken=verificationToken;
+        user.status=UserStatus.PENDING;
 
         return user;
     }
@@ -68,6 +73,11 @@ public class User{
     public void withdraw() {
         this.status = UserStatus.WITHDRAWN;
         this.deletedAt = Instant.now();
+    }
+
+    public void verifyEmail() {
+        this.status = UserStatus.ACTIVE;
+        this.verificationToken = null;
     }
 
 

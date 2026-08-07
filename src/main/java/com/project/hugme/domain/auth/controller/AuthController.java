@@ -1,9 +1,6 @@
 package com.project.hugme.domain.auth.controller;
 
-import com.project.hugme.domain.auth.dto.LoginRequest;
-import com.project.hugme.domain.auth.dto.LoginResponse;
-import com.project.hugme.domain.auth.dto.SignUpRequest;
-import com.project.hugme.domain.auth.dto.SignUpResponse;
+import com.project.hugme.domain.auth.dto.*;
 import com.project.hugme.domain.auth.security.CustomUserDetails;
 import com.project.hugme.domain.auth.service.AuthService;
 import jakarta.validation.Valid;
@@ -35,6 +32,36 @@ public class AuthController {
         LoginResponse response = authService.login(request);
         return ResponseEntity.ok(response);
 
+    }
+
+    @PostMapping("/token/reissue")
+    public ResponseEntity<TokenReissueResponse> reissue(
+            @Valid @RequestBody TokenReissueRequest request
+    ) {
+        TokenReissueResponse response =
+                authService.reissue(request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/mail/verify")
+    public ResponseEntity<String> verifyEmail(
+@RequestParam String token ){
+        authService.verifyEmail(token);
+
+        return ResponseEntity.ok(
+                "이메일 인증이 완료되었습니다."
+        );
+
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @AuthenticationPrincipal(expression = "userId") Long userId
+    ){
+        authService.logout(userId);
+
+        return ResponseEntity.noContent().build();
     }
 
 

@@ -32,7 +32,7 @@ this.accessTokenExpiration=accessTokenExpiration;
         this.refreshTokenExpiration = refreshTokenExpiration;
 
     }
-
+//accesstoken 생성
     public String createAccessToken(CustomUserDetails userDetails){
         Instant issuedAt = Instant.now();
         Instant expiration = issuedAt.plusMillis(accessTokenExpiration);
@@ -48,6 +48,7 @@ this.accessTokenExpiration=accessTokenExpiration;
 
 
     }
+    //refreshtoken 생성
     public String createRefreshToken(CustomUserDetails userDetails) {
         Instant issuedAt = Instant.now();
         Instant expiration = issuedAt.plusMillis(refreshTokenExpiration);
@@ -60,29 +61,29 @@ this.accessTokenExpiration=accessTokenExpiration;
                 .signWith(secretKey)
                 .compact();
     }
-
+    //refreshtoken 새 만료시간 발급
     public Instant getRefreshTokenExpiresAt() {
         return Instant.now().plusMillis(refreshTokenExpiration);
     }
-
+//refreshtoken 타입 확인
     public String getTokenType(String token) {
         Claims claims = parseClaims(token);
 
         return claims.get("tokenType", String.class);
     }
-
+//token에 대한 userId 확인
     public Long getUserId(String token){
         Claims claims = parseClaims(token);
 
         return Long.valueOf(claims.getSubject());
     }
-
+    //token에 대한 role 확인
     public String getRole(String token){
         Claims claims = parseClaims(token);
 
         return claims.get("role", String.class);
     }
-
+    //유효한 토큰인지 확인
     public boolean validateToken(String token){
         try{
             parseClaims(token);
@@ -91,7 +92,21 @@ this.accessTokenExpiration=accessTokenExpiration;
             return false;
         }
     }
+//refreshtoken인지 확인
+    public void validateRefreshToken(String token) {
+        Claims claims = parseClaims(token);
 
+        String tokenType = claims.get("tokenType", String.class);
+
+        if (!"REFRESH".equals(tokenType)) {
+            throw new IllegalArgumentException(
+                    "Refresh Token이 아닙니다."
+            );
+        }
+    }
+
+
+    //비밀키 서명 확인, payload의 각 claims 부분 반환
     private Claims parseClaims(String token){
         return Jwts.parser()
                 .verifyWith(secretKey)
