@@ -44,6 +44,17 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/mail/verify")
+    public ResponseEntity<String> verifyEmail(
+@RequestParam String token ){
+        authService.verifyEmail(token);
+
+        return ResponseEntity.ok(
+                "이메일 인증이 완료되었습니다."
+        );
+
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             @AuthenticationPrincipal(expression = "userId") Long userId

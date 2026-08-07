@@ -4,7 +4,8 @@ import com.project.hugme.domain.auth.repository.RefreshTokenRepository;
 import com.project.hugme.domain.user.dto.MyInfoResponse;
 import com.project.hugme.domain.user.entity.User;
 import com.project.hugme.domain.user.entity.UserStatus;
-import com.project.hugme.domain.user.exception.AlreadyWithdrawnUserException;
+import com.project.hugme.domain.user.exception.WithdrawnUserException;
+import com.project.hugme.domain.user.exception.EmailVerificationRequiredException;
 import com.project.hugme.domain.user.exception.UserNotFoundException;
 import com.project.hugme.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -39,8 +40,12 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException());
 
+        if (user.getStatus() == UserStatus.PENDING) {
+            throw new EmailVerificationRequiredException();
+        }
+
         if (user.getStatus() == UserStatus.WITHDRAWN) {
-            throw new AlreadyWithdrawnUserException();
+            throw new WithdrawnUserException();
         }
 
         return user;

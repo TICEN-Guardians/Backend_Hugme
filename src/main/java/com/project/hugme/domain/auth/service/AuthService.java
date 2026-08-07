@@ -9,11 +9,15 @@ import com.project.hugme.domain.auth.repository.RefreshTokenRepository;
 import com.project.hugme.domain.auth.security.CustomUserDetails;
 import com.project.hugme.domain.user.entity.User;
 import com.project.hugme.domain.user.entity.UserStatus;
+import com.project.hugme.domain.user.exception.EmailVerificationRequiredException;
 import com.project.hugme.domain.user.exception.UserNotFoundException;
+import com.project.hugme.domain.user.exception.WithdrawnUserException;
 import com.project.hugme.domain.user.repository.UserRepository;
 import com.project.hugme.global.security.jwt.JwtTokenProvider;
+import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +36,9 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final EmailService emailService;
+
+
 private final RefreshTokenRevocationService refreshTokenRevocationService;
     @Transactional
     public SignUpResponse signUp(SignUpRequest request)  {
@@ -41,28 +49,49 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
 
         String encodedPassword = passwordEncoder.encode(request.password());
 
+        String verificationToken =
+                UUID.randomUUID().toString();
+
+        String verificationUrl =
+                "http://localhost:8080/api/auth/mail/verify?token="
+                        + verificationToken;
+
+
+
+
         User user = User.createLocalUser(
                 request.email(),
                 encodedPassword,
-                request.name()
+                request.name(),
+                verificationToken
         );
 
+
         User savedUser = userRepository.save(user);
+
+        emailService.sendVerificationEmail(
+                user.getEmail(),
+                verificationUrl
+        );
+
+
 
         return SignUpResponse.from(savedUser);
     }
 
     @Transactional
     public LoginResponse login(LoginRequest request){
-
-        Authentication authentication =
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.email(),
-                        request.password()
-                )
-
-        );
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.email(),
+                            request.password()
+                    )
+            );
+        } catch (DisabledException e) {
+            throw new EmailVerificationRequiredException();
+        }
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
@@ -139,10 +168,9 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
                         )
                 );
 
-        // 6. 탈퇴 사용자 확인
+
+
         if (user.getStatus() != UserStatus.ACTIVE) {
-
-
             throw new IllegalArgumentException(
                     "비활성화된 사용자입니다."
             );
@@ -162,6 +190,20 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
 
                 );
 
+    }
+
+    @Transactional
+    public void verifyEmail(String token) {
+
+        User user = userRepository
+                .findByVerificationToken(token)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "유효하지 않은 이메일 인증 요청입니다."
+                        )
+                );
+
+        user.verifyEmail();
     }
 
     @Transactional

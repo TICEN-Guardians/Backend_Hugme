@@ -1,7 +1,8 @@
 package com.project.hugme.global.exception;
 
 import com.project.hugme.domain.auth.exception.RefreshTokenReuseException;
-import com.project.hugme.domain.user.exception.AlreadyWithdrawnUserException;
+import com.project.hugme.domain.user.exception.WithdrawnUserException;
+import com.project.hugme.domain.user.exception.EmailVerificationRequiredException;
 import com.project.hugme.domain.user.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,12 +30,27 @@ public class GlobalExceptionHandler {
                 .body(errorResponse);
     }
 
+    @ExceptionHandler(EmailVerificationRequiredException.class)
+    public ResponseEntity<ErrorResponse> handleEmailVerificationRequired(
+            EmailVerificationRequiredException e
+    ) {
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse(
+                        403,
+                        "EMAIL_VERIFICATION_REQUIRED",
+                        e.getMessage()
+                ));
+    }
+
+
     /**
      * 이미 탈퇴한 사용자
      */
-    @ExceptionHandler(AlreadyWithdrawnUserException.class)
+    @ExceptionHandler(WithdrawnUserException.class)
     public ResponseEntity<ErrorResponse> handleAlreadyWithdrawnUserException(
-            AlreadyWithdrawnUserException exception
+            WithdrawnUserException exception
     ) {
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.CONFLICT.value(),
