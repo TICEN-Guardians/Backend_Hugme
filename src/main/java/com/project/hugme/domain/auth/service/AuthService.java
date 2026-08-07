@@ -164,5 +164,10 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
 
     }
 
+    @Transactional
+    public void logout(Long userId) {
+        refreshTokenRepository.deleteByUserUserId(userId);
+    }
+
 
 }
