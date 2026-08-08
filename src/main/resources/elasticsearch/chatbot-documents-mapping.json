@@ -1,0 +1,66 @@
+{
+  "mappings": {
+    "properties": {
+      "document_id": {
+        "type": "long"
+      },
+      "document_name": {
+        "type": "text"
+      },
+      "description": {
+        "type": "text"
+      },
+      "issuer": {
+        "type": "text"
+      },
+      "preparation_method": {
+        "type": "text"
+      },
+      "online_availability": {
+        "type": "keyword"
+      },
+      "online_url": {
+        "type": "keyword"
+      },
+      "offline_availability": {
+        "type": "keyword"
+      },
+      "offline_location": {
+        "type": "text"
+      },
+      "required_documents": {
+        "type": "text"
+      },
+      "applicant_eligibility": {
+        "type": "text"
+      },
+      "fee": {
+        "type": "text"
+      },
+      "processing_time": {
+        "type": "text"
+      },
+      "notes": {
+        "type": "text"
+      },
+      "contact_info": {
+        "type": "text"
+      },
+      "official_guide_url": {
+        "type": "keyword"
+      },
+      "hug_reference_urls": {
+        "type": "keyword"
+      },
+      "verified_at": {
+        "type": "date"
+      },
+      "embedding": {
+        "type": "dense_vector",
+        "dims": 1024,
+        "index": true,
+        "similarity": "cosine"
+      }
+    }
+  }
+}
