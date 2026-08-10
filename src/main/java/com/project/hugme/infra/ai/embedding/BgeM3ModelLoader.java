@@ -30,7 +30,7 @@ public class BgeM3ModelLoader {
         return environment;
     }
 
-    public OrtSession getSesstion() {
+    public OrtSession getSession() {
         return session;
     }
 }
