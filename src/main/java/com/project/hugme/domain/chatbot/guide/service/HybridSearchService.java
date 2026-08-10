@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,8 @@ import java.util.stream.Collectors;
 public class HybridSearchService {
 
     private final VectorStore vectorStore;
+
+    @Qualifier("chatbotJdbcTemplate")
     private final JdbcTemplate jdbcTemplate;
 
     public List<Document> search(String query, List<String> sources) {
@@ -29,7 +32,7 @@ public class HybridSearchService {
         List<Document> vectorResults = vectorStore.similaritySearch(
                 SearchRequest.builder()
                         .query(query)
-                        .topK(5)
+                        .topK(8)
                         .filterExpression("source in [" + sourceListForFilter + "]")
                         .build()
         );
@@ -66,7 +69,7 @@ public class HybridSearchService {
                 "SELECT id, content, metadata->>'source' AS source FROM vector_store " +
                         "WHERE content::pdb.ngram(2,3) @@@ ? " +
                         "AND metadata->>'source' = ANY(?) " +
-                        "ORDER BY paradedb.score(id) DESC LIMIT 5",
+                        "ORDER BY paradedb.score(id) DESC LIMIT 8",
                 (rs, rowNum) -> Map.of(
                         "id", rs.getString("id"),
                         "content", rs.getString("content"),

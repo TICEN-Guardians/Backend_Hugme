@@ -7,6 +7,7 @@ import org.springframework.ai.reader.markdown.MarkdownDocumentReader;
 import org.springframework.ai.reader.markdown.config.MarkdownDocumentReaderConfig;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.FileSystemResource;
@@ -28,7 +29,10 @@ import java.util.stream.Stream;
 public class DocumentIngestionRunner implements CommandLineRunner {
 
     private final VectorStore vectorStore;
+
+    @Qualifier("chatbotJdbcTemplate")
     private final JdbcTemplate jdbcTemplate;
+
 
     @Value("${app.documents.root}")
     private String documentsRoot;

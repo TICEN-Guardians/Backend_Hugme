@@ -1,6 +1,7 @@
 package com.project.hugme.domain.chatbot.guide.repository;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -14,7 +15,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DocumentCatalogRepository {
 
+    @Qualifier("chatbotJdbcTemplate")
     private final JdbcTemplate jdbcTemplate;
+
     private Map<String, List<String>> sourcesByCategory;
 
     @EventListener(ApplicationReadyEvent.class)
