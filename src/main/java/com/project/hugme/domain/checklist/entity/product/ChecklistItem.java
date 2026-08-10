@@ -1,4 +1,4 @@
-package com.project.hugme.domain.checklist.entity;
+package com.project.hugme.domain.checklist.entity.product;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

@@ -1,4 +1,4 @@
-package com.project.hugme.domain.checklist.entity;
+package com.project.hugme.domain.checklist.entity.product;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -7,34 +7,34 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
-        name = "document_groups",
+        name = "checklist_groups",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_document_groups_item_order",
-                        columnNames = {"item_id", "sort_order"}
+                        name = "uk_checklist_groups_section_order",
+                        columnNames = {"section_id", "sort_order"}
                 )
         }
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class DocumentGroup {
+public class ChecklistGroup {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "document_group_id")
-    private Long documentGroupId;
+    @Column(name = "group_id")
+    private Long groupId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
-            name = "item_id",
+            name = "section_id",
             nullable = false
     )
-    private ChecklistItem item;
+    private ChecklistSection section;
 
     @Column(
             name = "group_name",
             nullable = false,
-            length = 300
+            length = 100
     )
     private String groupName;
 

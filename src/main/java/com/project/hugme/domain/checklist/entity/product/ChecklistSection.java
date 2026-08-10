@@ -1,4 +1,4 @@
-package com.project.hugme.domain.checklist.entity;
+package com.project.hugme.domain.checklist.entity.product;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -6,30 +6,29 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name="products")
+@Table(name = "checklist_sections")
 @Getter
-@NoArgsConstructor(access= AccessLevel.PROTECTED)
-public class Product {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class ChecklistSection {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="product_id")
-    private Long productId;
+    @Column(name = "section_id")
+    private Long sectionId;
 
     @Enumerated(EnumType.STRING)
     @Column(
-            name = "product_code",
+            name = "section_code",
             nullable = false,
             unique = true,
             length = 30
     )
-    private ProductCode productCode;
+    private SectionCode sectionCode;
 
     @Column(
-            name = "product_name",
+            name = "section_name",
             nullable = false,
             length = 100
     )
-    private String productName;
-
+    private String sectionName;
 }

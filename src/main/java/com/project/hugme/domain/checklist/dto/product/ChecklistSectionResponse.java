@@ -1,6 +1,6 @@
-package com.project.hugme.domain.checklist.dto;
+package com.project.hugme.domain.checklist.dto.product;
 
-import com.project.hugme.domain.checklist.entity.SectionCode;
+import com.project.hugme.domain.checklist.entity.product.SectionCode;
 
 import java.util.List;
 

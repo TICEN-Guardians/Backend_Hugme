@@ -1,4 +1,4 @@
-package com.project.hugme.domain.checklist.entity;
+package com.project.hugme.domain.checklist.entity.product;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -6,9 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name="housing_types")
+@Table(name = "housing_types")
 @Getter
-@NoArgsConstructor(access= AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HousingType {
 
     @Id

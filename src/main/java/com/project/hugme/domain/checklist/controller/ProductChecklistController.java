@@ -1,7 +1,7 @@
 package com.project.hugme.domain.checklist.controller;
 
 import com.project.hugme.domain.checklist.dto.product.ProductChecklistResponse;
-import com.project.hugme.domain.checklist.entity.ProductCode;
+import com.project.hugme.domain.checklist.entity.product.ProductCode;
 import com.project.hugme.domain.checklist.service.ProductChecklistService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

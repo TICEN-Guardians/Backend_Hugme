@@ -1,7 +1,7 @@
 package com.project.hugme.domain.checklist.repository;
 
-import com.project.hugme.domain.checklist.entity.Product;
-import com.project.hugme.domain.checklist.entity.ProductCode;
+import com.project.hugme.domain.checklist.entity.product.Product;
+import com.project.hugme.domain.checklist.entity.product.ProductCode;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

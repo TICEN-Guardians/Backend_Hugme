@@ -1,4 +1,4 @@
-package com.project.hugme.domain.checklist.dto;
+package com.project.hugme.domain.checklist.dto.product;
 
 import java.util.List;
 

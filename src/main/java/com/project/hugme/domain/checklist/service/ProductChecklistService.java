@@ -1,8 +1,7 @@
 package com.project.hugme.domain.checklist.service;
 
-import com.project.hugme.domain.checklist.dto.*;
-import com.project.hugme.domain.checklist.dto.product.ProductChecklistResponse;
-import com.project.hugme.domain.checklist.entity.*;
+import com.project.hugme.domain.checklist.dto.product.*;
+import com.project.hugme.domain.checklist.entity.product.*;
 import com.project.hugme.domain.checklist.repository.ChecklistItemRepository;
 import com.project.hugme.domain.checklist.repository.DocumentRepository;
 import com.project.hugme.domain.checklist.repository.ProductRepository;
