@@ -4,12 +4,15 @@ package com.project.hugme.domain.checklist.service;
 import com.project.hugme.domain.checklist.dto.application.ApplicationCreateRequest;
 import com.project.hugme.domain.checklist.dto.application.ApplicationCreateResponse;
 import com.project.hugme.domain.checklist.dto.application.OCRResponse;
+import com.project.hugme.domain.checklist.dto.application.OCRUpdateRequest;
 import com.project.hugme.domain.checklist.entity.application.Application;
 import com.project.hugme.domain.checklist.entity.application.ApplicationInfo;
 import com.project.hugme.domain.checklist.entity.application.ApplicationStatus;
+import com.project.hugme.domain.checklist.entity.product.HousingType;
 import com.project.hugme.domain.checklist.entity.product.Product;
 import com.project.hugme.domain.checklist.repository.ApplicationInfoRepository;
 import com.project.hugme.domain.checklist.repository.ApplicationRepository;
+import com.project.hugme.domain.checklist.repository.HousingTypeRepository;
 import com.project.hugme.domain.checklist.repository.ProductRepository;
 import com.project.hugme.domain.user.entity.User;
 import com.project.hugme.domain.user.entity.UserStatus;
@@ -32,6 +35,7 @@ public class ApplicationChecklistService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final ApplicationInfoRepository applicationInfoRepository;
+    private final HousingTypeRepository housingTypeRepository;
 
 
     @Transactional
@@ -102,5 +106,48 @@ public class ApplicationChecklistService {
                         );
 
         return OCRResponse.from(applicationInfo);
+    }
+
+    @Transactional
+    public OCRResponse updateOCRResult(Long userId, Long applicationId, OCRUpdateRequest request
+    ) {
+        ApplicationInfo applicationInfo =
+                applicationInfoRepository
+                        .findByApplicationIdAndUserId(
+                                applicationId,
+                                userId
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "OCR 결과를 찾을 수 없습니다."
+                                )
+                        );
+        HousingType housingType =
+                housingTypeRepository
+                        .findByHousingTypeCode(
+                                request.housingTypeCode()
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "주택유형을 찾을 수 없습니다: "
+                                                + request.housingTypeCode()
+                                )
+                        );
+
+        applicationInfo.updateAndConfirm(
+                housingType,
+                request.contractAddress(),
+                request.contractType(),
+                request.tenantType(),
+                request.landlordType(),
+                request.fixedDateConfirmed(),
+                request.officetelResidentialMarked(),
+                request.landlordProxyContract()
+        );
+
+        return OCRResponse.from(
+                applicationInfo
+        );
+   
     }
 }

@@ -76,4 +76,27 @@ public class ApplicationInfo {
             nullable = false
     )
     private Instant updatedAt;
+
+    public void updateAndConfirm(
+            HousingType housingType,
+            String contractAddress,
+            ContractType contractType,
+            PartyType tenantType,
+            PartyType landlordType,
+            Boolean fixedDateConfirmed,
+            Boolean officetelResidentialMarked,
+            Boolean landlordProxyContract
+    ) {
+        this.housingType = housingType;
+        this.contractAddress = contractAddress;
+        this.contractType = contractType;
+        this.tenantType = tenantType;
+        this.landlordType = landlordType;
+        this.fixedDateConfirmed = fixedDateConfirmed;
+        this.officetelResidentialMarked =
+                officetelResidentialMarked;
+        this.landlordProxyContract =
+                landlordProxyContract;
+        this.confirmedAt = Instant.now();
+    }
 }

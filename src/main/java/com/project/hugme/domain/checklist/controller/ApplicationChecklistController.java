@@ -3,6 +3,7 @@ package com.project.hugme.domain.checklist.controller;
 import com.project.hugme.domain.checklist.dto.application.ApplicationCreateRequest;
 import com.project.hugme.domain.checklist.dto.application.ApplicationCreateResponse;
 import com.project.hugme.domain.checklist.dto.application.OCRResponse;
+import com.project.hugme.domain.checklist.dto.application.OCRUpdateRequest;
 import com.project.hugme.domain.checklist.service.ApplicationChecklistService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -55,4 +56,26 @@ public class ApplicationChecklistController {
         return ResponseEntity.ok(response);
     }
     // userid 랑 application의 applicationId
+
+    @Operation(
+            summary = "OCR 결과 수정 및 확정",
+            description = "임대차계약서 OCR 분석 결과를 사용자가 수정하고 최종 확정합니다."
+    )
+    @PatchMapping("/{applicationId}/info")
+    public ResponseEntity<OCRResponse> updateOCRResult(
+            @AuthenticationPrincipal(expression = "userId") Long userId,
+            @PathVariable("applicationId") Long applicationId,
+
+            @Valid @RequestBody OCRUpdateRequest request
+
+
+    ) {
+        OCRResponse response = applicationChecklistService.updateOCRResult(
+                userId,
+                applicationId,
+                request
+        );
+
+        return ResponseEntity.ok(response);
+    }
 }
