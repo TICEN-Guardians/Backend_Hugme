@@ -25,4 +25,5 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
             @Param("applicationStatus")
             ApplicationStatus applicationStatus
     );
+
 }

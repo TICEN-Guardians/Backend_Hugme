@@ -3,9 +3,12 @@ package com.project.hugme.domain.checklist.service;
 
 import com.project.hugme.domain.checklist.dto.application.ApplicationCreateRequest;
 import com.project.hugme.domain.checklist.dto.application.ApplicationCreateResponse;
+import com.project.hugme.domain.checklist.dto.application.OCRResponse;
 import com.project.hugme.domain.checklist.entity.application.Application;
+import com.project.hugme.domain.checklist.entity.application.ApplicationInfo;
 import com.project.hugme.domain.checklist.entity.application.ApplicationStatus;
 import com.project.hugme.domain.checklist.entity.product.Product;
+import com.project.hugme.domain.checklist.repository.ApplicationInfoRepository;
 import com.project.hugme.domain.checklist.repository.ApplicationRepository;
 import com.project.hugme.domain.checklist.repository.ProductRepository;
 import com.project.hugme.domain.user.entity.User;
@@ -28,6 +31,7 @@ public class ApplicationChecklistService {
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final ApplicationInfoRepository applicationInfoRepository;
 
 
     @Transactional
@@ -80,5 +84,23 @@ public class ApplicationChecklistService {
                 savedApplication
         );
 
+    }
+
+
+    public OCRResponse getOCRResult(Long userId, Long applicationId) {
+// userID applicationId
+        ApplicationInfo applicationInfo =
+                applicationInfoRepository
+                        .findByApplicationIdAndUserId(
+                                applicationId,
+                                userId
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "OCR 결과를 찾을 수 없습니다."
+                                )
+                        );
+
+        return OCRResponse.from(applicationInfo);
     }
 }

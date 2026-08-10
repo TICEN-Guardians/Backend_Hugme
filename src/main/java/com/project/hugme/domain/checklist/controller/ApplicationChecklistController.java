@@ -2,6 +2,7 @@ package com.project.hugme.domain.checklist.controller;
 
 import com.project.hugme.domain.checklist.dto.application.ApplicationCreateRequest;
 import com.project.hugme.domain.checklist.dto.application.ApplicationCreateResponse;
+import com.project.hugme.domain.checklist.dto.application.OCRResponse;
 import com.project.hugme.domain.checklist.service.ApplicationChecklistService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -10,10 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -41,4 +39,20 @@ public class ApplicationChecklistController {
         return ResponseEntity.ok(response);
 
     }
+
+
+    @Operation(
+            summary = "OCR 결과 조회",
+            description = "로그인 사용자의 applicationId에 저장된 임대차계약서 OCR 분석 결과를 조회합니다."
+    )
+    @GetMapping("/{applicationId}/info")
+    public ResponseEntity<OCRResponse> getOCRResult(
+            @AuthenticationPrincipal(expression = "userId") Long userId,
+            @PathVariable("applicationId") Long applicationId
+    ) {
+        OCRResponse response = applicationChecklistService.getOCRResult(userId, applicationId);
+
+        return ResponseEntity.ok(response);
+    }
+    // userid 랑 application의 applicationId
 }
