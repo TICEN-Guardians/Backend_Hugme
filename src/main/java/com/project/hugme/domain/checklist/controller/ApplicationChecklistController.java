@@ -4,6 +4,8 @@ import com.project.hugme.domain.checklist.dto.application.ApplicationCreateReque
 import com.project.hugme.domain.checklist.dto.application.ApplicationCreateResponse;
 import com.project.hugme.domain.checklist.dto.application.OCRResponse;
 import com.project.hugme.domain.checklist.dto.application.OCRUpdateRequest;
+import com.project.hugme.domain.checklist.dto.question.QuestionListResponse;
+import com.project.hugme.domain.checklist.entity.question.QuestionStep;
 import com.project.hugme.domain.checklist.service.ApplicationChecklistService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -75,6 +77,31 @@ public class ApplicationChecklistController {
                 applicationId,
                 request
         );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "질문 목록 조회",
+            description = "신청 상품과 OCR 결과에 맞는 단계별 질문을 조회합니다."
+    )
+    @GetMapping("/{applicationId}/questions")
+    public ResponseEntity<QuestionListResponse> getQuestions(
+            @AuthenticationPrincipal(expression = "userId") Long userId,
+            @PathVariable("applicationId") Long applicationId,
+            @Parameter(
+                    description = "질문 단계",
+                    required = true,
+                    example = "STEP1"
+            )
+            @RequestParam("step") QuestionStep questionStep) {
+
+        QuestionListResponse response =
+                applicationChecklistService.getQuestions(
+                        userId,
+                        applicationId,
+                        questionStep
+                );
 
         return ResponseEntity.ok(response);
     }
