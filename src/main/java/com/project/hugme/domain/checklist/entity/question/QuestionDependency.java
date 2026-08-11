@@ -1,4 +1,4 @@
-package com.project.hugme.domain.checklist.dto.question;
+package com.project.hugme.domain.checklist.entity.question;
 
 public class QuestionDependency {
 }
