@@ -1,4 +1,4 @@
-package com.project.hugme.infra.elasticsearch.document;
+package com.project.hugme.infra.elasticsearch.document.service;
 
 import com.project.hugme.infra.elasticsearch.document.dto.DocumentSearchData;
 import org.springframework.stereotype.Component;
