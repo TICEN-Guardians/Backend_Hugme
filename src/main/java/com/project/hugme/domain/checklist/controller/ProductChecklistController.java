@@ -6,6 +6,7 @@ import com.project.hugme.domain.checklist.service.ProductChecklistService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductChecklistController {
 
     private final ProductChecklistService productChecklistService;
-
+    @SecurityRequirements
     @Operation(
             summary = "상품별 전체 준비서류 조회",
             description = "상품 코드에 해당하는 기본서류, 추가서류, 보증료 할인서류를 " +
