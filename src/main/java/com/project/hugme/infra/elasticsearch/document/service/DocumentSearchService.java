@@ -2,23 +2,25 @@ package com.project.hugme.infra.elasticsearch.document.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.GetResponse;
+import com.project.hugme.infra.ai.embedding.BgeM3EmbeddingService;
 import com.project.hugme.infra.elasticsearch.document.dto.DocumentIndexDocument;
 import com.project.hugme.infra.elasticsearch.document.dto.DocumentSearchResponse;
+import com.project.hugme.infra.elasticsearch.intent.DocumentBm25FieldMapper;
 import com.project.hugme.infra.elasticsearch.intent.DocumentIntentFieldMapper;
 import com.project.hugme.infra.elasticsearch.intent.DocumentQuestionIntent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.HashMap;
 
 @Service
 @RequiredArgsConstructor
 public class DocumentSearchService {
 
     private final ElasticsearchClient elasticsearchClient;
+    private final BgeM3EmbeddingService embeddingService;
 
     @Value("${hugme.elasticsearch.document-index}")
     private String indexName;
@@ -58,7 +60,222 @@ public class DocumentSearchService {
         );
     }
 
-    private Map<String, Object> extractFields(
+    public List<DocumentSearchResponse> searchByBm25(
+            String query,
+            List<DocumentQuestionIntent> intents,
+            int topk
+    ) throws Exception {
+        List<String> searchFields =
+                DocumentBm25FieldMapper.getSearchFields(intents);
+
+        if (searchFields.isEmpty()) {
+            return List.of();
+        }
+
+        var response = elasticsearchClient.search(
+                s -> s
+                        .index(indexName)
+                        .size(topk)
+                        .query(q -> q
+                                .multiMatch(m -> m
+                                        .query(query)
+                                        .fields(searchFields)
+                                )
+                        ),
+                DocumentIndexDocument.class
+        );
+
+        List<String> responseFields =
+                DocumentIntentFieldMapper.getResponseFields(intents);
+
+        return response.hits()
+                .hits()
+                .stream()
+                .filter(hit -> hit.source() != null)
+                .map(hit -> {
+                    DocumentIndexDocument document = hit.source();
+
+                    Map<String, Object> fields =
+                            extractFields(document, responseFields);
+
+                    return new DocumentSearchResponse(
+                            document.documentId(),
+                            document.documentName(),
+                            fields,
+                            document.officialGuideUrl(),
+                            document.hugReferenceUrls(),
+                            hit.score()
+                    );
+                })
+                .toList();
+    }
+
+    public List<DocumentSearchResponse> searchByVector(
+            String query,
+            List<DocumentQuestionIntent> intents,
+            int topk
+    ) throws Exception {
+
+        float[] queryEmbedding =
+                embeddingService.embed(query);
+
+        List<Float> queryVector =
+                toFloatList(queryEmbedding);
+
+        int numCandidates = 20;
+
+        var response = elasticsearchClient.search(
+                s -> s
+                        .index(indexName)
+                        .size(topk)
+                        .knn(k -> k
+                                .field("embedding")
+                                .queryVector(queryVector)
+                                .k(topk)
+                                .numCandidates(numCandidates)
+                        ),
+                DocumentIndexDocument.class
+        );
+
+        List<String> responseFields =
+                DocumentIntentFieldMapper.getResponseFields(intents);
+
+        return response.hits()
+                .hits()
+                .stream()
+                .filter(hit -> hit.source() != null)
+                .map(hit -> {
+
+                    DocumentIndexDocument document = hit.source();
+
+                    Map<String, Object> fields =
+                            extractFields(document, responseFields);
+
+                    return new DocumentSearchResponse(
+                            document.documentId(),
+                            document.documentName(),
+                            fields,
+                            document.officialGuideUrl(),
+                            document.hugReferenceUrls(),
+                            hit.score()
+                    );
+                })
+                .toList();
+    }
+
+    private List<Float> toFloatList(float[] vector) {
+
+        List<Float> result =
+                new ArrayList<>(vector.length);
+
+        for (float value : vector) {
+            result.add(value);
+        }
+
+        return result;
+    }
+
+    public List<DocumentSearchResponse> searchByHybrid(
+            String query,
+            List<DocumentQuestionIntent> intents,
+            int topK
+    ) throws Exception {
+
+        // RRF에 사용할 후보를 최종 Top-K보다 넉넉하게 가져옴
+        int candidateK = Math.max(20, topK * 5);
+
+        List<DocumentSearchResponse> bm25Results =
+                searchByBm25(query, intents, candidateK);
+
+        List<DocumentSearchResponse> vectorResults =
+                searchByVector(query, intents, candidateK);
+
+        return mergeByRrf(
+                bm25Results,
+                vectorResults,
+                topK
+        );
+    }
+
+    private List<DocumentSearchResponse> mergeByRrf(
+            List<DocumentSearchResponse> bm25Results,
+            List<DocumentSearchResponse> vectorResults,
+            int topK
+    ) {
+
+        final int RRF_K = 60;
+
+        Map<Long, Double> rrfScores = new HashMap<>();
+        Map<Long, DocumentSearchResponse> documents = new LinkedHashMap<>();
+
+        // BM25 순위 반영
+        for (int i = 0; i < bm25Results.size(); i++) {
+
+            DocumentSearchResponse result = bm25Results.get(i);
+
+            int rank = i + 1;
+
+            double score =
+                    1.0 / (RRF_K + rank);
+
+            rrfScores.merge(
+                    result.documentId(),
+                    score,
+                    Double::sum
+            );
+
+            documents.putIfAbsent(
+                    result.documentId(),
+                    result
+            );
+        }
+
+        for (int i = 0; i < vectorResults.size(); i++) {
+
+            DocumentSearchResponse result = vectorResults.get(i);
+
+            int rank = i + 1;
+
+            double score =
+                    1.0 / (RRF_K + rank);
+
+            rrfScores.merge(
+                    result.documentId(),
+                    score,
+                    Double::sum
+            );
+
+            documents.putIfAbsent(
+                    result.documentId(),
+                    result
+            );
+        }
+
+        return rrfScores.entrySet()
+                .stream()
+                .sorted(
+                        Map.Entry.<Long, Double>comparingByValue()
+                                .reversed()
+                )
+                .limit(topK)
+                .map(entry -> {
+
+                    DocumentSearchResponse original =
+                            documents.get(entry.getKey());
+
+                    return new DocumentSearchResponse(
+                            original.documentId(),
+                            original.documentName(),
+                            original.fields(),
+                            original.officialGuideUrl(),
+                            original.hugReferenceUrls(),
+                            entry.getValue()
+                    );
+                })
+                .toList();
+    }
+
+        private Map<String, Object> extractFields(
             DocumentIndexDocument document,
             List<String> responseFields
     ) {
