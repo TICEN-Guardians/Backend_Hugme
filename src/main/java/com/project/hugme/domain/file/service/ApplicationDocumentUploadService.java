@@ -3,7 +3,7 @@ package com.project.hugme.domain.file.service;
 import com.project.hugme.domain.checklist.entity.application.Application;
 import com.project.hugme.domain.checklist.entity.product.Document;
 import com.project.hugme.domain.checklist.repository.ApplicationRepository;
-import com.project.hugme.domain.checklist.repository.DocumentRepository;
+import com.project.hugme.domain.checklist.repository.product.DocumentRepository;
 import com.project.hugme.domain.file.dto.FileUploadResponse;
 import com.project.hugme.domain.file.dto.StoredFile;
 import com.project.hugme.domain.file.entity.ApplicationDocumentUpload;
