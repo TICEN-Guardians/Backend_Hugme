@@ -64,4 +64,9 @@ public class Application {
 
         return application;
     }
+
+    public void complete() {
+        this.applicationStatus = ApplicationStatus.DONE;
+    }
+
 }

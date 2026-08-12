@@ -1,12 +1,12 @@
 package com.project.hugme.domain.checklist.controller;
 
-import com.project.hugme.domain.checklist.dto.application.ApplicationCreateRequest;
-import com.project.hugme.domain.checklist.dto.application.ApplicationCreateResponse;
-import com.project.hugme.domain.checklist.dto.application.OCRResponse;
-import com.project.hugme.domain.checklist.dto.application.OCRUpdateRequest;
+import com.project.hugme.domain.checklist.dto.application.*;
+import com.project.hugme.domain.checklist.dto.question.QuestionAnswersRequest;
+import com.project.hugme.domain.checklist.dto.question.QuestionAnswersResponse;
 import com.project.hugme.domain.checklist.dto.question.QuestionListResponse;
 import com.project.hugme.domain.checklist.entity.question.QuestionStep;
 import com.project.hugme.domain.checklist.service.ApplicationChecklistService;
+import com.project.hugme.domain.checklist.service.MyDocumentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,9 +26,11 @@ import org.springframework.web.bind.annotation.*;
 public class ApplicationChecklistController {
 
     private final ApplicationChecklistService applicationChecklistService;
+    private final MyDocumentService myDocumentService;
+
 
     @Operation(
-            summary = "맞춤 체크리스트 시작",
+            summary = "1. 맞춤 체크리스트 진입",
             description = "완료된 동일 상품 신청이 있으면 해당 결과를 반환하고, 없으면 새로운 신청을 생성합니다."
     )
     @PostMapping
@@ -45,7 +47,7 @@ public class ApplicationChecklistController {
 
 
     @Operation(
-            summary = "OCR 결과 조회",
+            summary = "2. OCR 결과 조회",
             description = "로그인 사용자의 applicationId에 저장된 임대차계약서 OCR 분석 결과를 조회합니다."
     )
     @GetMapping("/{applicationId}/info")
@@ -60,7 +62,7 @@ public class ApplicationChecklistController {
     // userid 랑 application의 applicationId
 
     @Operation(
-            summary = "OCR 결과 수정 및 확정",
+            summary = "3. OCR 결과 수정 및 확정",
             description = "임대차계약서 OCR 분석 결과를 사용자가 수정하고 최종 확정합니다."
     )
     @PatchMapping("/{applicationId}/info")
@@ -82,7 +84,7 @@ public class ApplicationChecklistController {
     }
 
     @Operation(
-            summary = "질문 목록 조회",
+            summary = "4. 질문 목록 조회",
             description = "신청 상품과 OCR 결과에 맞는 단계별 질문을 조회합니다."
     )
     @GetMapping("/{applicationId}/questions")
@@ -102,6 +104,51 @@ public class ApplicationChecklistController {
                         applicationId,
                         questionStep
                 );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "5. 질문 답변 제출",
+            description = "단계별 질문 답변을 제출하고 추가 질문 또는 최종 서류를 계산합니다."
+    )
+    @PostMapping("/{applicationId}/answers")
+    public ResponseEntity<QuestionAnswersResponse> submitAnswers(
+            @AuthenticationPrincipal(expression = "userId") Long userId,
+            @PathVariable("applicationId") Long applicationId,
+            @Valid @RequestBody QuestionAnswersRequest request
+
+    ) {
+        QuestionAnswersResponse response =
+                applicationChecklistService.submitAnswers(
+                        userId,
+                        applicationId,
+                        request
+                );
+
+        return ResponseEntity.ok(response);
+
+    }
+
+    @Operation(
+            summary = "6. 현재 준비서류 조회",
+            description = "기본·추가·할인 분류별 최종 준비서류를 조회합니다."
+    )
+    @GetMapping("/{applicationId}/documents")
+    public ResponseEntity<MyDocumentListResponse>
+    getCurrentDocuments(
+            @AuthenticationPrincipal(expression = "userId")
+            Long userId,
+
+            @PathVariable("applicationId")
+            Long applicationId
+    ) {
+        MyDocumentListResponse response =
+                myDocumentService
+                        .getCurrentDocuments(
+                                userId,
+                                applicationId
+                        );
 
         return ResponseEntity.ok(response);
     }
