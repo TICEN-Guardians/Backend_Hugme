@@ -1,15 +1,24 @@
 FROM eclipse-temurin:21-jdk AS builder
-WORKDIR /workspace
-COPY gradlew gradlew
+
+WORKDIR /app
+
+COPY gradlew .
 COPY gradle gradle
-COPY settings.gradle settings.gradle
-COPY build.gradle build.gradle
+COPY build.gradle .
+COPY settings.gradle .
+
 RUN chmod +x gradlew
+
 COPY src src
-RUN ./gradlew clean bootJar -x test --no-daemon
+
+RUN ./gradlew clean bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre
+
 WORKDIR /app
-COPY --from=builder /workspace/build/libs/*.jar app.jar
+
+COPY --from=builder /app/build/libs/*.jar app.jar
+
 EXPOSE 8080
+
 ENTRYPOINT ["java", "-jar", "app.jar"]
