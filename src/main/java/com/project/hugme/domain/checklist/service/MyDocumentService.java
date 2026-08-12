@@ -1,14 +1,12 @@
 package com.project.hugme.domain.checklist.service;
 
 import com.project.hugme.domain.checklist.dto.application.MyDocumentListResponse;
-import com.project.hugme.domain.checklist.dto.application.MyDocumentResponse;
 import com.project.hugme.domain.checklist.dto.application.MyDocumentSectionResponse;
-import com.project.hugme.domain.checklist.dto.product.DocumentGroupResponse;
+import com.project.hugme.domain.checklist.dto.common.DocumentResponse;
 import com.project.hugme.domain.checklist.entity.application.ApplicationInfo;
 import com.project.hugme.domain.checklist.entity.application.ChecklistDocumentResult;
 import com.project.hugme.domain.checklist.entity.product.ChecklistSection;
 import com.project.hugme.domain.checklist.entity.product.Document;
-import com.project.hugme.domain.checklist.entity.product.DocumentGroup;
 import com.project.hugme.domain.checklist.entity.product.SectionCode;
 import com.project.hugme.domain.checklist.repository.ApplicationInfoRepository;
 import com.project.hugme.domain.checklist.repository.ChecklistDocumentResultRepository;
@@ -31,102 +29,56 @@ public class MyDocumentService {
             Long userId,
             Long applicationId
     ) {
-        /*
-         * applicationId가 로그인 사용자의 신청인지 확인한다.
-         */
         ApplicationInfo applicationInfo =
-                applicationInfoRepository
-                        .findByApplicationIdAndUserId(
-                                applicationId,
-                                userId
-                        )
+                applicationInfoRepository.findByApplicationIdAndUserId(applicationId, userId)
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
                                         "신청정보를 찾을 수 없습니다."
                                 )
                         );
 
-        /*
-         * checklist_document_results에 저장된
-         * 사용자별 최종 서류를 조회한다.
-         */
-        List<ChecklistDocumentResult> results =
-                resultRepository.findCurrentDocuments(
-                        applicationId,
-                        userId
-                );
+        List<ChecklistDocumentResult> results = resultRepository.findCurrentDocuments(applicationId, userId);
 
-        List<MyDocumentSectionResponse> sectionResponses =
-                new ArrayList<>();
+        List<MyDocumentSectionResponse> sectionResponses = new ArrayList<>();
 
         /*
-         * BASIC → ADDITIONAL → DISCOUNT 순서로 처리한다.
+         * BASIC → ADDITIONAL → DISCOUNT 순서
          */
-        for (SectionCode sectionCode
-                : SectionCode.values()) {
+        for (SectionCode sectionCode : SectionCode.values()) {
 
             String sectionName = null;
 
-            List<MyDocumentResponse> documentResponses =
-                    new ArrayList<>();
+            /*
+             * 현재 section에 속하는 서류를 담을 목록
+             */
+            List<DocumentResponse> documentResponses = new ArrayList<>();
 
+            /*
+             * 최종 서류를 한 번만 순회
+             */
             for (ChecklistDocumentResult result : results) {
 
-                Document document =
-                        result.getDocument();
+                Document document = result.getDocument();
 
-                ChecklistSection section =
-                        document
-                                .getItem()
-                                .getSection();
+                ChecklistSection section = document
+                        .getItem()
+                        .getSection();
 
                 /*
-                 * 현재 처리 중인 Section이 아니면 제외한다.
+                 * 현재 section이 아니면 제외
                  */
-                if (section.getSectionCode()
-                        != sectionCode) {
+                if (section.getSectionCode() != sectionCode) {
                     continue;
                 }
-
                 sectionName =
                         section.getSectionName();
 
-                /*
-                 * 택1 서류 그룹이 있으면 함께 반환한다.
-                 */
-                DocumentGroupResponse documentGroupResponse =
-                        null;
-
-                DocumentGroup documentGroup =
-                        document.getDocumentGroup();
-
-                if (documentGroup != null) {
-                    documentGroupResponse =
-                            new DocumentGroupResponse(
-                                    documentGroup
-                                            .getDocumentGroupId(),
-                                    documentGroup.getGroupName(),
-                                    documentGroup.getSortOrder()
-                            );
-                }
-
-                MyDocumentResponse documentResponse =
-                        new MyDocumentResponse(
-                                document.getDocumentId(),
-                                document.getDocumentName(),
-                                document.getDescription(),
-                                document.getSampleImageUrl(),
-                                document.getSortOrder(),
-                                documentGroupResponse
-                        );
-
                 documentResponses.add(
-                        documentResponse
+                        DocumentResponse.from(document)
                 );
             }
-
             /*
-             * 최종 서류가 존재하는 Section만 응답한다.
+             * 서류가 존재하는 section만 응답에 추가
              */
             if (!documentResponses.isEmpty()) {
 
@@ -137,9 +89,7 @@ public class MyDocumentService {
                                 documentResponses
                         );
 
-                sectionResponses.add(
-                        sectionResponse
-                );
+                sectionResponses.add(sectionResponse);
             }
         }
 

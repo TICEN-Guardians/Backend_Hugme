@@ -7,7 +7,6 @@ import java.util.List;
 public record ProductChecklistResponse(
         ProductCode productCode,
         String productName,
-        List<ChecklistSectionResponse> sections) {
-
-
+        List<ChecklistItemResponse> items
+) {
 }

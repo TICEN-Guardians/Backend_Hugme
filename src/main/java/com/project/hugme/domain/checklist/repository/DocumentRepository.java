@@ -10,14 +10,16 @@ import java.util.List;
 public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     @Query("""
-                SELECT document
-                FROM Document document
-                LEFT JOIN FETCH document.documentGroup
-                WHERE document.item.itemId IN :itemIds
+            SELECT document
+            FROM Document document
+            LEFT JOIN FETCH document.documentGroup
+            WHERE document.item.itemId IN :itemIds
+            ORDER BY
+                document.item.itemId ASC,
+                document.sortOrder ASC,
+                document.documentId ASC
             """)
     List<Document> findAllWithDocumentGroup(
             @Param("itemIds") List<Long> itemIds
     );
-
-
 }
