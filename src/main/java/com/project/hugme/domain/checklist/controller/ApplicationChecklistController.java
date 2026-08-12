@@ -6,6 +6,7 @@ import com.project.hugme.domain.checklist.dto.question.QuestionAnswersResponse;
 import com.project.hugme.domain.checklist.dto.question.QuestionListResponse;
 import com.project.hugme.domain.checklist.entity.question.QuestionStep;
 import com.project.hugme.domain.checklist.service.ApplicationChecklistService;
+import com.project.hugme.domain.checklist.service.LeaseContractService;
 import com.project.hugme.domain.checklist.service.MyDocumentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,6 +29,7 @@ public class ApplicationChecklistController {
 
     private final ApplicationChecklistService applicationChecklistService;
     private final MyDocumentService myDocumentService;
+    private final LeaseContractService leaseContractService;
 
 
     @Operation(
@@ -44,6 +47,20 @@ public class ApplicationChecklistController {
         return ResponseEntity.ok(response);
 
     }
+
+    @PostMapping("/{applicationId}/lease-contract")
+    public ResponseEntity<OCRResponse> uploadLeaseContract(
+            @AuthenticationPrincipal(expression = "userId") Long userId,
+            @PathVariable("applicationId") Long applicationId,
+            @RequestParam("file") MultipartFile file
+    ){
+        OCRResponse response = leaseContractService.uploadAndAnalyze(
+                userId,applicationId,file
+        );
+        return ResponseEntity.ok(response);
+    }
+
+
 
 
     @Operation(
