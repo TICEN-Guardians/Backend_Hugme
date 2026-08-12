@@ -7,6 +7,7 @@ import com.project.hugme.domain.checklist.repository.ApplicationInfoRepository;
 
 import com.project.hugme.domain.checklist.repository.ApplicationRepository;
 import com.project.hugme.domain.file.dto.FileUploadResponse;
+import com.project.hugme.domain.file.service.ApplicationDocumentUploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,7 +18,7 @@ public class LeaseContractService {
 
     private final ApplicationRepository applicationRepository;
     private final ApplicationInfoRepository applicationInfoRepository;
-
+    private final ApplicationDocumentUploadService applicationDocumentUploadService;
     public OCRResponse uploadAndAnalyze(
             Long userId,
             Long applicationId,
@@ -38,9 +39,13 @@ public class LeaseContractService {
                         );
 
 
-//        // 2. 파일 저장
-//        FileUploadResponse uploadedFile =
-//                localStorageService.storeFile(file);
+        FileUploadResponse uploadedFile =
+                applicationDocumentUploadService.upload(
+                        userId,
+                        applicationId,
+                        25L,
+                        file
+                );
 ////여기서 추가 값 작성해서 ocr테이블 저장
 //
 ////        // 3. FastAPI OCR 호출 및 응답 수신
