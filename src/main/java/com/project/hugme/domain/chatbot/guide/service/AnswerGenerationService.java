@@ -1,26 +1,33 @@
 package com.project.hugme.domain.chatbot.guide.service;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.document.Document;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class AnswerGenerationService {
 
     private final ChatClient chatClient;
 
-    public String generate(String query, List<Document> contextDocs) {
+    public AnswerGenerationService(@Qualifier("conversationalChatClient") ChatClient chatClient){
+        this.chatClient = chatClient;
+    }
+
+    public String generate(String sessionId, String query, List<Document> contextDocs) {
         if (contextDocs.isEmpty()) {
             return "죄송합니다, 관련된 정보를 찾지 못했습니다. 다른 방식으로 질문해 주시겠어요?";
         }
 
         String context = contextDocs.stream()
-                .map(Document::getText)
+                .map(doc -> {
+                    String source = String.valueOf(doc.getMetadata().getOrDefault("source", "출처불명"));
+                    return "[출처: " + source + "]\n" + doc.getText();
+                })
                 .collect(Collectors.joining("\n\n---\n\n"));
 
         String prompt = """
@@ -38,6 +45,10 @@ public class AnswerGenerationService {
                 %s
                 """.formatted(context, query);
 
-        return chatClient.prompt().user(prompt).call().content();
+        return chatClient.prompt()
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, sessionId))
+                .user(prompt)
+                .call()
+                .content();
     }
 }
