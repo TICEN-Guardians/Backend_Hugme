@@ -1,7 +1,9 @@
 .git
+.gitignore
 .gradle
 build
+out
 .idea
-.env
+.vscode
 *.iml
 .DS_Store
