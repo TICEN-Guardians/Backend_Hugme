@@ -53,14 +53,12 @@ public class ApplicationChecklistController {
             @AuthenticationPrincipal(expression = "userId") Long userId,
             @PathVariable("applicationId") Long applicationId,
             @RequestParam("file") MultipartFile file
-    ){
+    ) {
         OCRResponse response = leaseContractService.uploadAndAnalyze(
-                userId,applicationId,file
+                userId, applicationId, file
         );
         return ResponseEntity.ok(response);
     }
-
-
 
 
     @Operation(
@@ -86,7 +84,6 @@ public class ApplicationChecklistController {
     public ResponseEntity<OCRResponse> updateOCRResult(
             @AuthenticationPrincipal(expression = "userId") Long userId,
             @PathVariable("applicationId") Long applicationId,
-
             @Valid @RequestBody OCRUpdateRequest request
 
 
@@ -115,6 +112,7 @@ public class ApplicationChecklistController {
             )
             @RequestParam("step") QuestionStep questionStep) {
 
+        //Question단계에 대한 질문들과 그 답변들을 한번에 전달
         QuestionListResponse response =
                 applicationChecklistService.getQuestions(
                         userId,

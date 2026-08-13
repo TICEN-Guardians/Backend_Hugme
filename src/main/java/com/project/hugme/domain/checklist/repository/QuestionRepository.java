@@ -21,10 +21,7 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
                 ORDER BY question.questionOrder
             """)
     List<Question> findQuestions(
-            @Param("productCode")
-            ProductCode productCode,
-
-            @Param("questionStep")
-            QuestionStep questionStep
+            @Param("productCode") ProductCode productCode,
+            @Param("questionStep") QuestionStep questionStep
     );
 }

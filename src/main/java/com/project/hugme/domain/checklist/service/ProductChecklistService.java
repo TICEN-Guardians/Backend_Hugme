@@ -60,6 +60,7 @@ public class ProductChecklistService {
             ChecklistGroup group =
                     checklistItem.getGroup();
 
+            //기본서류는 group = null
             Long groupId = null;
             String groupName = null;
             Integer groupSortOrder = null;

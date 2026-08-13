@@ -1,7 +1,10 @@
 package com.project.hugme.domain.auth.service;
 
 
-import com.project.hugme.domain.auth.dto.*;
+import com.project.hugme.domain.auth.dto.LoginRequest;
+import com.project.hugme.domain.auth.dto.SignUpRequest;
+import com.project.hugme.domain.auth.dto.SignUpResponse;
+import com.project.hugme.domain.auth.dto.TokenPair;
 import com.project.hugme.domain.auth.entity.RefreshToken;
 import com.project.hugme.domain.auth.exception.DuplicateEmailException;
 import com.project.hugme.domain.auth.exception.RefreshTokenReuseException;
@@ -16,7 +19,6 @@ import com.project.hugme.domain.user.repository.UserRepository;
 import com.project.hugme.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.antlr.runtime.Token;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -40,11 +42,12 @@ public class AuthService {
     private final EmailService emailService;
 
 
-private final RefreshTokenRevocationService refreshTokenRevocationService;
-    @Transactional
-    public SignUpResponse signUp(SignUpRequest request)  {
+    private final RefreshTokenRevocationService refreshTokenRevocationService;
 
-        if(userRepository.existsByEmail(request.email())){
+    @Transactional
+    public SignUpResponse signUp(SignUpRequest request) {
+
+        if (userRepository.existsByEmail(request.email())) {
             throw new DuplicateEmailException();
         }
 
@@ -56,8 +59,6 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
         String verificationUrl =
                 "http://localhost:8080/api/auth/mail/verify?token="
                         + verificationToken;
-
-
 
 
         User user = User.createLocalUser(
@@ -76,12 +77,11 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
         );
 
 
-
         return SignUpResponse.from(savedUser);
     }
 
     @Transactional
-    public TokenPair login(LoginRequest request){
+    public TokenPair login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(UserNotFoundException::new);
 
@@ -112,12 +112,12 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
                 jwtTokenProvider.getRefreshTokenExpiresAt();
 
 
-
         saveRefreshToken(user, refreshToken, expiresAt);
 
         return new TokenPair(accessToken, refreshToken);
 
     }
+
     private void saveRefreshToken(
             User user,
             String tokenValue,
@@ -143,7 +143,7 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
     @Transactional
     public TokenPair reissue(
             String requestToken
-    ){
+    ) {
         // 1. 서명, 만료시간, 토큰 타입 검증
         jwtTokenProvider.validateRefreshToken(requestToken);
 
@@ -152,7 +152,7 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
 
         // 3. DB에 저장된 현재 Refresh Token 조회
         RefreshToken savedToken = refreshTokenRepository.findByUserUserId(userId)
-                .orElseThrow(()-> new IllegalArgumentException("저장된 Refresh Token이 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("저장된 Refresh Token이 없습니다."));
 
 
         // 5. 현재 사용자 조회
@@ -185,8 +185,6 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
         }
 
 
-
-
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new IllegalArgumentException(
                     "비활성화된 사용자입니다."
@@ -199,9 +197,9 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
 
         String newRefreshToken = jwtTokenProvider.createRefreshToken(userDetails);
 
-        savedToken.update(newRefreshToken,jwtTokenProvider.getRefreshTokenExpiresAt());
+        savedToken.update(newRefreshToken, jwtTokenProvider.getRefreshTokenExpiresAt());
 
-                return new TokenPair(newAccessToken,newRefreshToken);
+        return new TokenPair(newAccessToken, newRefreshToken);
 
     }
 
@@ -221,6 +219,7 @@ private final RefreshTokenRevocationService refreshTokenRevocationService;
 
     @Transactional
     public void logout(Long userId) {
+
         refreshTokenRepository.deleteByUserUserId(userId);
     }
 

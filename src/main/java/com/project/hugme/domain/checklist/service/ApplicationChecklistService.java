@@ -11,7 +11,6 @@ import com.project.hugme.domain.checklist.dto.question.QuestionListResponse;
 import com.project.hugme.domain.checklist.dto.question.QuestionResponse;
 import com.project.hugme.domain.checklist.entity.application.Application;
 import com.project.hugme.domain.checklist.entity.application.ApplicationInfo;
-import com.project.hugme.domain.checklist.entity.application.ApplicationStatus;
 import com.project.hugme.domain.checklist.entity.application.ContractType;
 import com.project.hugme.domain.checklist.entity.product.HousingType;
 import com.project.hugme.domain.checklist.entity.product.HousingTypeCode;
@@ -24,15 +23,16 @@ import com.project.hugme.domain.checklist.repository.*;
 import com.project.hugme.domain.user.entity.User;
 import com.project.hugme.domain.user.entity.UserStatus;
 import com.project.hugme.domain.user.exception.EmailVerificationRequiredException;
-import com.project.hugme.domain.user.exception.UserNotFoundException;
 import com.project.hugme.domain.user.exception.WithdrawnUserException;
 import com.project.hugme.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.project.hugme.domain.checklist.entity.product.ProductCode.SPECIAL;
@@ -53,8 +53,12 @@ public class ApplicationChecklistService {
 
     @Transactional
     public ApplicationCreateResponse createApplication(Long userId, ApplicationCreateRequest request) {
+
+        //Application 엔티티를 만들기 위해 필요한 User 엔티티를 조회
+        //유저ID를 바탕으로 유저 상태 확인 - 이메인 인증전인지,탈퇴한 회원인지 확인
         User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
         if (user.getStatus() == UserStatus.PENDING) {
             throw new EmailVerificationRequiredException();
@@ -64,6 +68,7 @@ public class ApplicationChecklistService {
             throw new WithdrawnUserException();
         }
 
+        //Application 엔티티를 만들기 위해 필요한 Product 엔티티를 조회
         Product product = productRepository
                 .findByProductCode(request.productCode())
                 .orElseThrow(() ->
@@ -73,28 +78,25 @@ public class ApplicationChecklistService {
                         )
                 );
 
-        List<Application> completedApplications =
-                applicationRepository.findApplications(
-                        user.getUserId(),
-                        product.getProductId(),
-                        ApplicationStatus.DONE
-                );
+        //유저의 신청진행 상태가 DONE인지 확인
+        Optional<Application> completedApplication =
+                applicationRepository
+                        .findLatestCompletedApplication(
+                                user.getUserId(),
+                                product.getProductId()
+                        );
 
-        if (!completedApplications.isEmpty()) {
-
-            /*
-             * createdAt 내림차순으로 정렬했으므로
-             * 0번이 가장 최근에 완료된 신청이다.
-             */
-            Application completedApplication =
-                    completedApplications.get(0);
-
+        //완료가 존재하면 그 결과 반영
+        if (completedApplication.isPresent()) {
             return ApplicationCreateResponse.from(
-                    completedApplication
+                    completedApplication.get()
             );
         }
+
+        //새로운 Application 엔티티 생성
         Application newApplication = Application.create(user, product);
 
+        //Application 엔티티 저장
         Application savedApplication = applicationRepository.save(newApplication);
 
         return ApplicationCreateResponse.from(
@@ -120,6 +122,7 @@ public class ApplicationChecklistService {
 
         return OCRResponse.from(applicationInfo);
     }
+
 
     @Transactional
     public OCRResponse updateOCRResult(Long userId, Long applicationId, OCRUpdateRequest request
@@ -166,26 +169,27 @@ public class ApplicationChecklistService {
 
     public QuestionListResponse getQuestions(Long userId, Long applicationId, QuestionStep questionStep) {
 
-        //1. 로그인 사용자의 신청정보와 OCR 결과를 조회
+        //로그인 사용자의 신청정보와 OCR 결과를 조회
         ApplicationInfo applicationInfo = applicationInfoRepository.findByApplicationIdAndUserId(applicationId, userId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "신청정보를 찾을 수 없습니다."
                 ));
 
-        //2. step은 optionId에 따라 달라져서 이후 다른 api로 진행
+        //step3은 optionId에 따라 달라져서 이후 다른 api로 진행
         if (questionStep == QuestionStep.STEP3) {
             throw new IllegalArgumentException(
                     "STEP3 질문은 답변 제출 결과로 조회해야 합니다."
             );
         }
+        //질문 처리
 
-        //3. 신청한 상품 코드를 가져온다.
+        //신청한 상품 코드를 가져온다.
         Product product = applicationInfo.getApplication()
                 .getProduct();
 
         ProductCode productCode = product.getProductCode();
 
-        //4. 특례반환보증 신규계약은 보증료 할인 질문을 하지 않음
+        //특례반환보증 신규계약은 보증료 할인 질문을 하지 않음
         if (productCode == SPECIAL
                 && applicationInfo.getContractType()
                 == ContractType.NEW
@@ -196,15 +200,15 @@ public class ApplicationChecklistService {
             return new QuestionListResponse(questionStep, emptyQuestions);
         }
 
-        //5. 상품과 질문 단계에 맞는 질문 조회
+        //상품과 질문 단계에 맞는 질문 조회
         List<Question> questions = questionRepository.findQuestions(
                 productCode, questionStep);
 
-        //최종질문목록이 될 List
+        //최종질문목록 = List + QuestionStep
         List<QuestionResponse> questionResponses =
                 new ArrayList<>();
 
-        //6.조회된 질문을 하나씩 확인한다.
+        //조회된 질문을 하나씩 확인한다.
         for (Question question : questions) {
             // OCR 임차인,임대인 유형 확인
             boolean partyTypeVisible = isPartyTypeVisible(question, applicationInfo);
@@ -214,7 +218,7 @@ public class ApplicationChecklistService {
             }
 
             //주택유형
-            boolean housingTypeVisible = isHousingTypeVisible(
+            boolean housingTypeVisible = isVisibleForHousingType(
                     question,
                     applicationInfo
             );
@@ -235,16 +239,15 @@ public class ApplicationChecklistService {
 
     }
 
-    private boolean isHousingTypeVisible(Question question, ApplicationInfo applicationInfo) {
+    private boolean isVisibleForHousingType(Question question, ApplicationInfo applicationInfo) {
 
         HousingTypeCode housingTypeCode = applicationInfo.getHousingType().getHousingTypeCode();
 
         String questionText = question.getQuestionText();
 
-        /*
-         * 신규 분양 아파트 질문은
-         * APARTMENT에서만 표시한다.
-         */
+
+        //신규 분양 아파트 질문은
+        //APARTMENT에서만 표시한다.
         if (questionText.equals(
                 "소유권보존등기만 이루어진 신규 분양 아파트인가요?"
         )) {
@@ -252,10 +255,9 @@ public class ApplicationChecklistService {
                     == HousingTypeCode.APARTMENT;
         }
 
-        /*
-         * 상가 확인 질문은
-         * 단독·다중·다가구주택에서만 표시한다.
-         */
+
+        //상가 확인 질문은
+        //단독·다중·다가구주택에서만 표시한다.
         if (questionText.equals(
                 "건축물대장에 근린생활시설 등 상가가 확인되나요?"
         )) {
@@ -263,9 +265,8 @@ public class ApplicationChecklistService {
                     == HousingTypeCode.HOUSE;
         }
 
-        /*
-         * 별도의 주택유형 제한이 없는 질문은 표시한다.
-         */
+
+        //별도의 주택유형 제한이 없는 질문은 표시한다.
         return true;
 
 
@@ -294,9 +295,7 @@ public class ApplicationChecklistService {
     @Transactional
     public QuestionAnswersResponse submitAnswers(Long userId, Long applicationId, QuestionAnswersRequest request) {
 
-        /*
-         *  1. userId와 applicationId로 사용자 신청정보를 확인한다.
-         */
+        //신청자 정보 확인
         ApplicationInfo applicationInfo = applicationInfoRepository.findByApplicationIdAndUserId(applicationId, userId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "신청정보를 찾을 수 없습니다."
