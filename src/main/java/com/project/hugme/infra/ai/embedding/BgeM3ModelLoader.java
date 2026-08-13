@@ -5,6 +5,8 @@ import ai.onnxruntime.OrtSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import static reactor.netty.http.HttpConnectionLiveness.log;
+
 @Component
 public class BgeM3ModelLoader {
     private final OrtEnvironment environment;
@@ -23,7 +25,7 @@ public class BgeM3ModelLoader {
                 sessionOptions
         );
 
-        System.out.println("BGE-M3 ONNX 모델 로드 성공");
+        log.info("BGE-M3 ONNX 모델 로드 성공");
     }
 
     public OrtEnvironment getEnvironment() {
