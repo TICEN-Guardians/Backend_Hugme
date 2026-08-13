@@ -301,20 +301,7 @@ public class ApplicationChecklistService {
                         "신청정보를 찾을 수 없습니다."
                 ));
 
-
-        /*
-         *  2. 요청으로 받은 optionId의 중복을 제거한다.
-         */
-
         List<Long> selectedOptionIds = new ArrayList<>();
-
-        for (Long optionId
-                : request.selectedOptionIds()) {
-
-            if (!selectedOptionIds.contains(optionId)) {
-                selectedOptionIds.add(optionId);
-            }
-        }
 
         /*
          *  3. optionIds를 기준으로 QuestionOption과 연결된 childQuestions를 함께 조회
