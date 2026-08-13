@@ -14,9 +14,9 @@ import java.util.Map;
 @Service
 public class BgeM3EmbeddingService {
 
-    private final OrtEnvironment environment;
-    private final OrtSession session;
-    private final HuggingFaceTokenizer tokenizer;
+    private final OrtEnvironment environment; // ONNX Runtime 실행 환경 객체
+    private final OrtSession session; // BGE-M3 ONNX 모델을 실행하는 세션
+    private final HuggingFaceTokenizer tokenizer; // 자연어 문자 토큰화
 
     public BgeM3EmbeddingService(
             BgeM3ModelLoader modelLoader
@@ -32,6 +32,7 @@ public class BgeM3EmbeddingService {
         );
     }
 
+    // 입력 문장을 임베딩 벡터로 변환
     public float[] embed(String text) throws Exception {
 
         Encoding encoding = tokenizer.encode(text);
@@ -68,6 +69,8 @@ public class BgeM3EmbeddingService {
 
         }
     }
+
+    // 정규화 (벡터의 길이를 1로 맞춰주는 과정)
     private float[] normalize(float[] vector) {
         double sum = 0.0;
 

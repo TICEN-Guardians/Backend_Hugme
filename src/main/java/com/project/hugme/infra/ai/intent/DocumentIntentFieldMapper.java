@@ -4,6 +4,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+// 최종 답변 생성에 제공할 필드
 public class DocumentIntentFieldMapper {
 
     private DocumentIntentFieldMapper() {

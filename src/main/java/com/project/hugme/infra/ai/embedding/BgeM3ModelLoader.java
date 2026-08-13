@@ -4,13 +4,13 @@ import ai.onnxruntime.OrtEnvironment;
 import ai.onnxruntime.OrtSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import lombok.extern.slf4j.Slf4j;
 
-import static reactor.netty.http.HttpConnectionLiveness.log;
-
+@Slf4j
 @Component
 public class BgeM3ModelLoader {
-    private final OrtEnvironment environment;
-    private final OrtSession session;
+    private final OrtEnvironment environment; // ONNX Runtime을 실행하기 위한 기본 실행 환경 객체
+    private final OrtSession session; // ONNX Runtime에서 ONNX 모델을 메모리에 로드하고 추론을 실행하는 객체
 
     public BgeM3ModelLoader(
             @Value("${hugme.embedding.model-path}") String modelPath

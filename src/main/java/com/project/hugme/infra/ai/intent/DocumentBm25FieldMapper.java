@@ -4,6 +4,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+// intent 별 BM25의 검색 대상 필드 정의
 public final class DocumentBm25FieldMapper {
 
     private DocumentBm25FieldMapper() {
@@ -94,6 +95,7 @@ public final class DocumentBm25FieldMapper {
         };
     }
 
+    // 복수 intent 처리
     public static List<String> getSearchFields(
             List<DocumentQuestionIntent> intents
     ) {

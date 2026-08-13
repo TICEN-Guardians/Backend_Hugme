@@ -13,6 +13,7 @@ public class DocumentStructuredQueryParser {
         this.chatClient = chatClientBuilder.build();
     }
 
+    // 질문을 Structured Query로 파싱
     public DocumentStructuredQuery parse(String question) {
 
         return chatClient.prompt()
@@ -241,6 +242,6 @@ public class DocumentStructuredQueryParser {
                         """)
                 .user(question)
                 .call()
-                .entity(DocumentStructuredQuery.class);
+                .entity(DocumentStructuredQuery.class); // LLM 응답을 Spring AI Structured Output을 사용해 DocumentStructuredQuery로 매핑
     }
 }
