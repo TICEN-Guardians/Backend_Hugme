@@ -1,7 +1,7 @@
 package com.project.hugme.infra.ai.intent.service;
 
-import com.project.hugme.infra.ai.intent.dto.DocumentStructuredQuery;
-import com.project.hugme.infra.ai.intent.service.DocumentStructuredQueryParser;
+import com.project.hugme.infra.ai.intent.DocumentStructuredQuery;
+import com.project.hugme.infra.ai.intent.DocumentStructuredQueryParser;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -1,10 +1,10 @@
-package com.project.hugme.infra.ai.document.service;
+package com.project.hugme.domain.chatbot.document.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.GetResponse;
 import com.project.hugme.infra.ai.embedding.BgeM3EmbeddingService;
-import com.project.hugme.infra.ai.document.dto.DocumentIndexDocument;
-import com.project.hugme.infra.ai.document.dto.DocumentSearchResponse;
+import com.project.hugme.domain.chatbot.document.dto.DocumentIndexDocument;
+import com.project.hugme.domain.chatbot.document.dto.DocumentSearchResponse;
 import com.project.hugme.infra.ai.intent.DocumentBm25FieldMapper;
 import com.project.hugme.infra.ai.intent.DocumentIntentFieldMapper;
 import com.project.hugme.infra.ai.intent.DocumentQuestionIntent;

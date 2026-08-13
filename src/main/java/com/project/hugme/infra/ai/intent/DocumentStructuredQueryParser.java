@@ -1,6 +1,5 @@
-package com.project.hugme.infra.ai.intent.service;
+package com.project.hugme.infra.ai.intent;
 
-import com.project.hugme.infra.ai.intent.dto.DocumentStructuredQuery;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 

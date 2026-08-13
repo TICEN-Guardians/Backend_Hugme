@@ -1,7 +1,7 @@
-package com.project.hugme.infra.ai.document.service;
+package com.project.hugme.domain.chatbot.document.service;
 
 import com.project.hugme.infra.ai.embedding.BgeM3EmbeddingService;
-import com.project.hugme.infra.ai.document.dto.DocumentSearchData;
+import com.project.hugme.domain.chatbot.document.dto.DocumentSearchData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

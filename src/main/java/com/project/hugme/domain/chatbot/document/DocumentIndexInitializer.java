@@ -1,4 +1,4 @@
-package com.project.hugme.infra.ai.document;
+package com.project.hugme.domain.chatbot.document;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import lombok.RequiredArgsConstructor;

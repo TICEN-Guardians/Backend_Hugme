@@ -1,6 +1,4 @@
-package com.project.hugme.infra.ai.intent.dto;
-
-import com.project.hugme.infra.ai.intent.DocumentQuestionIntent;
+package com.project.hugme.infra.ai.intent;
 
 import java.util.List;
 

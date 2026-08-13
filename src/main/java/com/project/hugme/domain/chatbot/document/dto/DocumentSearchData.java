@@ -1,4 +1,4 @@
-package com.project.hugme.infra.ai.document.dto;
+package com.project.hugme.domain.chatbot.document.dto;
 
 import java.time.LocalDate;
 import java.util.List;

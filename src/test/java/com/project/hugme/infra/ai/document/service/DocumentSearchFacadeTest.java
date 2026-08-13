@@ -1,8 +1,8 @@
 package com.project.hugme.infra.ai.document.service;
 
-import com.project.hugme.infra.ai.document.dto.DocumentSearchRequest;
-import com.project.hugme.infra.ai.document.dto.DocumentSearchResponse;
-import com.project.hugme.infra.ai.document.service.DocumentSearchFacade;
+import com.project.hugme.domain.chatbot.document.dto.DocumentSearchRequest;
+import com.project.hugme.domain.chatbot.document.dto.DocumentSearchResponse;
+import com.project.hugme.domain.chatbot.document.service.DocumentSearchFacade;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

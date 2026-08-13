@@ -1,6 +1,6 @@
-package com.project.hugme.infra.ai.document.repository;
+package com.project.hugme.domain.chatbot.document.repository;
 
-import com.project.hugme.infra.ai.document.dto.DocumentSearchData;
+import com.project.hugme.domain.chatbot.document.dto.DocumentSearchData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
