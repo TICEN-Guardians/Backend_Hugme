@@ -42,11 +42,13 @@ public class SecurityConfig {
                                 "/api/auth/signup",
                                 "/api/auth/login",
                                 "/api/auth/token/reissue",
+                                "/api/products/**",
                                 "/api/auth/mail/verify",
                                 "/oauth2/**",
                                 "/login/oauth2/**",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/api/chatbot/guide/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
