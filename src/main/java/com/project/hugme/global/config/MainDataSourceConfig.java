@@ -2,10 +2,8 @@ package com.project.hugme.global.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.context.annotation.Primary;
 
 import javax.sql.DataSource;
@@ -31,13 +29,5 @@ public class MainDataSourceConfig {
                 .password(password)
                 .driverClassName("org.postgresql.Driver")
                 .build();
-    }
-
-    @Primary
-    @Bean(name = "mainJdbcTemplate")
-    public JdbcTemplate mainJdbcTemplate(
-            @Qualifier("mainDataSource") DataSource dataSource
-    ) {
-        return new JdbcTemplate(dataSource);
     }
 }
