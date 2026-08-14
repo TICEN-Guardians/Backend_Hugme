@@ -74,19 +74,6 @@ public class Document {
     )
     private Integer sortOrder;
 
-    @Column(
-            name = "created_at",
-            nullable = false,
-            updatable = false
-    )
-    private Instant createdAt;
-
-    @Column(
-            name = "updated_at",
-            nullable = false
-    )
-    private Instant updatedAt;
-
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "document_housing_types",
