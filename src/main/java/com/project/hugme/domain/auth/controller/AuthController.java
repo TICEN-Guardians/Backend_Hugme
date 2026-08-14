@@ -43,6 +43,23 @@ public class AuthController {
 
     @SecurityRequirements
     @Operation(
+            summary = "2. 이메일 인증",
+            description = "이메일로 전달된 인증 토큰을 검증하고 회원 상태를 ACTIVE로 변경합니다."
+    )
+    @GetMapping("/mail/verify")
+    public ResponseEntity<String> verifyEmail(
+            @RequestParam String token) {
+        authService.verifyEmail(token);
+
+        return ResponseEntity.ok(
+                "이메일 인증이 완료되었습니다."
+        );
+
+    }
+
+
+    @SecurityRequirements
+    @Operation(
             summary = "3. 로그인",
             description = "이메일과 비밀번호로 로그인합니다. " +
                     "Access Token은 응답 Body로 반환하고, " +
@@ -99,21 +116,6 @@ public class AuthController {
                 );
     }
 
-    @SecurityRequirements
-    @Operation(
-            summary = "2. 이메일 인증",
-            description = "이메일로 전달된 인증 토큰을 검증하고 회원 상태를 ACTIVE로 변경합니다."
-    )
-    @GetMapping("/mail/verify")
-    public ResponseEntity<String> verifyEmail(
-            @RequestParam String token) {
-        authService.verifyEmail(token);
-
-        return ResponseEntity.ok(
-                "이메일 인증이 완료되었습니다."
-        );
-
-    }
 
     @Operation(
             summary = "5. 로그아웃",

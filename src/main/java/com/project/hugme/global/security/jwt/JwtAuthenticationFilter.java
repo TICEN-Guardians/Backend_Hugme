@@ -32,17 +32,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain
-    )throws ServletException, IOException {
+    ) throws ServletException, IOException {
 
         String token = resolveToken(request);
 
-        if(token !=null && jwtTokenProvider.validateToken(token)
-        && SecurityContextHolder.getContext().getAuthentication()==null){
+        if (token != null && jwtTokenProvider.validateToken(token)
+                && SecurityContextHolder.getContext().getAuthentication() == null) {
 
             Long userId = jwtTokenProvider.getUserId(token);
 
             CustomUserDetails userDetails = customUserDetailsService.loadUserById(userId);
 
+            //authenticationManager에게 전달
             UsernamePasswordAuthenticationToken authentication =
                     UsernamePasswordAuthenticationToken.authenticated(
                             userDetails,
@@ -61,25 +62,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         }
 
-        filterChain.doFilter(request,response);
-
+        filterChain.doFilter(request, response);
 
 
     }
 
-    private String resolveToken(HttpServletRequest request){
+    private String resolveToken(HttpServletRequest request) {
         String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if(!StringUtils.hasText(authorizationHeader)
-        || !authorizationHeader.startsWith(BEARER_PREFIX)){
+        if (!StringUtils.hasText(authorizationHeader)
+                || !authorizationHeader.startsWith(BEARER_PREFIX)) {
             return null;
         }
         return authorizationHeader.substring(BEARER_PREFIX.length());
 
     }
-
-
-
 
 
 }

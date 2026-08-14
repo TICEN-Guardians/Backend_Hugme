@@ -49,6 +49,7 @@ public class ChecklistItem {
     )
     private boolean defaultIncluded;
 
+    //itemId를 기반으로 Product 목록을 가져오는 관계
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "checklist_item_products",
