@@ -45,3 +45,5 @@ out/
 build/
 .idea/
 *.iml
+
+/src/main/resources/models/
