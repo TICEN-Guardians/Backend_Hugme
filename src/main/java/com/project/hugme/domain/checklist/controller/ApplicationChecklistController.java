@@ -49,6 +49,10 @@ public class ApplicationChecklistController {
 
     }
 
+    @Operation(
+            summary = "2. 임대차계약서 업로드 및 OCR 분석",
+            description = "임대차계약서 파일을 업로드하고 OCR 분석을 수행합니다."
+    )
     @PostMapping(
             value = "/{applicationId}/lease-contract",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
@@ -66,7 +70,7 @@ public class ApplicationChecklistController {
 
 
     @Operation(
-            summary = "2. OCR 결과 조회",
+            summary = "3. OCR 결과 조회",
             description = "로그인 사용자의 applicationId에 저장된 임대차계약서 OCR 분석 결과를 조회합니다."
     )
     @GetMapping("/{applicationId}/info")
@@ -81,7 +85,7 @@ public class ApplicationChecklistController {
     // userid 랑 application의 applicationId
 
     @Operation(
-            summary = "3. OCR 결과 수정 및 확정",
+            summary = "4. OCR 결과 수정 및 확정",
             description = "임대차계약서 OCR 분석 결과를 사용자가 수정하고 최종 확정합니다."
     )
     @PatchMapping("/{applicationId}/info")
@@ -102,7 +106,7 @@ public class ApplicationChecklistController {
     }
 
     @Operation(
-            summary = "4. 질문 목록 조회",
+            summary = "5. 질문 목록 조회",
             description = "신청 상품과 OCR 결과에 맞는 단계별 질문을 조회합니다."
     )
     @GetMapping("/{applicationId}/questions")
@@ -128,7 +132,7 @@ public class ApplicationChecklistController {
     }
 
     @Operation(
-            summary = "5. 질문 답변 제출",
+            summary = "6. 질문 답변 제출",
             description = "단계별 질문 답변을 제출하고 추가 질문 또는 최종 서류를 계산합니다."
     )
     @PostMapping("/{applicationId}/answers")
@@ -150,7 +154,7 @@ public class ApplicationChecklistController {
     }
 
     @Operation(
-            summary = "6. 현재 준비서류 조회",
+            summary = "7. 현재 준비서류 조회",
             description = "기본·추가·할인 분류별 최종 준비서류를 조회합니다."
     )
     @GetMapping("/{applicationId}/documents")
