@@ -50,7 +50,7 @@ public class OcrClient {
             body.add("files", filePart);
 
             return aiRestClient.post()
-                    .uri("/ocr")
+                    .uri("/checklist/ocr")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(body)
                     .retrieve()
