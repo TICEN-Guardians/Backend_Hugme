@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.project.hugme.domain.diagnosis.dto.request.PropertySearchRequest;
+import com.project.hugme.domain.diagnosis.dto.response.PropertySearchResponse;
 
 @RestController
 @RequestMapping("/api/properties")
@@ -23,6 +25,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class PropertyResolveController {
 
     private final DiagnosisService diagnosisService;
+
+    @PostMapping("/search")
+    @Operation(
+            summary = "진단 대상 주소 검색",
+            description = "주소를 표준화하고 선택 가능한 주거동을 조회합니다."
+    )
+    public ResponseEntity<PropertySearchResponse> searchProperty(
+            @Valid @RequestBody PropertySearchRequest request
+    ) {
+        PropertySearchResponse response =
+                diagnosisService.searchProperty(request);
+
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/resolve")
     @Operation(

@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertySearchRequest;
+import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertySearchResponse;
 
 @Component
 public class FastApiDiagnosisClient {
@@ -16,6 +18,26 @@ public class FastApiDiagnosisClient {
             @Qualifier("diagnosisRestClient") RestClient restClient
     ) {
         this.restClient = restClient;
+    }
+
+    public FastApiPropertySearchResponse searchProperty(
+            FastApiPropertySearchRequest request
+    ) {
+        FastApiPropertySearchResponse response = restClient
+                .post()
+                .uri("/internal/v1/properties/search")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .retrieve()
+                .body(FastApiPropertySearchResponse.class);
+
+        if (response == null) {
+            throw new IllegalStateException(
+                    "FastAPI 주소 검색 응답이 없습니다."
+            );
+        }
+
+        return response;
     }
 
     public FastApiPropertyResolveResponse resolveProperty(
