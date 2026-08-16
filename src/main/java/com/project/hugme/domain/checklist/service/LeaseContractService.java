@@ -22,7 +22,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Transactional(readOnly = true)
 public class LeaseContractService {
 
-    private final ApplicationInfoRepository applicationInfoRepository;
+    private final ApplicationRepository applicationRepository;
+    private final ApplicationInfoRepository applicationinfoRepository;
     private final HousingTypeRepository housingTypeRepository;
     private final OcrClient ocrClient;
 
@@ -34,13 +35,22 @@ public class LeaseContractService {
     ) {
 
         // 1. 신청 정보 확인
-        ApplicationInfo applicationInfo =
-                applicationInfoRepository
-                        .findByApplicationIdAndUserId(applicationId, userId)
+        Application application =
+                applicationRepository
+                        .findByApplicationIdAndUser_UserId(
+                                applicationId,
+                                userId
+                        )
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
                                         "신청정보를 찾을 수 없습니다."
                                 )
+                        );
+        ApplicationInfo applicationInfo =
+                applicationinfoRepository
+                        .findById(applicationId)
+                        .orElseGet(() ->
+                                ApplicationInfo.create(application)
                         );
 
         // 2. FastAPI에 파일 전달 → OCRResponse 바로 수신
