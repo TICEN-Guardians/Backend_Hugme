@@ -28,7 +28,7 @@ public class DiagnosisService {
     public PropertyResolveResponse resolveProperty(PropertyResolveRequest request) {
 
         FastApiPropertyResolveRequest fastApiRequest =
-                FastApiPropertyResolveRequest.from(request.address());
+                FastApiPropertyResolveRequest.from(request);
 
         FastApiPropertyResolveResponse fastApiResponse =
                 fastApiDiagnosisClient.resolveProperty(fastApiRequest);

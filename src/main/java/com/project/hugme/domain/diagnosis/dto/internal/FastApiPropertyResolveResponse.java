@@ -5,6 +5,8 @@ import com.project.hugme.domain.diagnosis.enums.HousingType;
 
 public record FastApiPropertyResolveResponse(
         String normalizedAddress,
+        String buildingName,
+        String dongName,
         HousingType housingType,
         boolean contractAreaRequired
 ) {
@@ -12,6 +14,8 @@ public record FastApiPropertyResolveResponse(
     public PropertyResolveResponse toResponse() {
         return new PropertyResolveResponse(
                 normalizedAddress,
+                buildingName,
+                dongName,
                 housingType,
                 contractAreaRequired
         );
