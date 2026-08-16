@@ -80,7 +80,10 @@ public class LeaseContractService {
                 ocrResponse.landlordProxyContract()
         );
 
+        ApplicationInfo savedApplicationInfo =
+                applicationinfoRepository.save(applicationInfo);
+
         // 5. DB에 반영된 Entity 기준으로 응답 생성
-        return OCRResponse.from(applicationInfo);
+        return OCRResponse.from(savedApplicationInfo);
     }
 }
