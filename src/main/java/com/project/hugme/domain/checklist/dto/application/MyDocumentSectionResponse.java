@@ -8,6 +8,6 @@ import java.util.List;
 public record MyDocumentSectionResponse(
         SectionCode sectionCode,
         String sectionName,
-        List<DocumentResponse> documents
+        List<MyDocumentListResponse> items
 ) {
 }
