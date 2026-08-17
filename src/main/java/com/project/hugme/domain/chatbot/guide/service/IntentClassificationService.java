@@ -47,12 +47,14 @@ public class IntentClassificationService {
         - product: 전세보증금반환보증, 전세금안심대출보증, 특례반환보증 등 보증상품의 종류·조건·가입방법·보증금액·보증료에 관한 질문
         - prevention: 전세사기 예방을 위한 일반적인 지식, 계약 시 유의사항, 등기부등본·건축물대장 등 서류를 어떻게 읽고 무엇을 확인해야 하는지, 사기 유형 사례, 피해 발생 시 대처방법 등 "지식·방법"을 알고 싶어하는 질문
         - feature: 사용자의 특정 매물·계약·상황이 안전한지 판정·진단해달라는 요청, 또는 서류 발급·제출 절차 자체를 안내받고 싶어하는 요청 (예: "이 집 괜찮나요?", "제 매물 위험도 확인해주세요", "서류는 어떻게 발급받나요?")
-        - off_topic: 전세보증금, 부동산 계약, 전세사기 예방과 무관한 질문(잡담, 허그미 외 서비스 문의, 일반 상식 질문 등)
+        - meta: 챗봇 자신에 대한 질문(무슨 챗봇인지, 뭘 할 수 있는지) 또는 이전 대화 내용 등 상담 챗봇 이용에 있어 필요한 사항을 묻는 질문
+        - off_topic: 전세보증금, 부동산 계약, 전세사기 예방 등 상담 챗봇의 기능과 무관한 질문(잡담, 허그미 외 서비스 문의, 부동산 관련 외적인 일반 상식 질문 등)
         
         [분류 후 처리 방법]
         - category가 "product"이면 아래 번호 목록 중 1~%d번(product 파일)에서 관련된 번호 최대 5개를 sourceIndices에
         - category가 "prevention"이면 아래 번호 목록 중 %d~%d번(prevention 파일)에서 관련된 번호 최대 5개를 sourceIndices에
         - category가 "feature"이면 sourceIndices는 빈 배열, featureType은 아래 기능 목록 중 하나로 판단
+        - category가 "feature"이면 sourceIndices는 빈 배열, featureType은 null
         - category가 "off_topic"이면 sourceIndices는 빈 배열, featureType은 null
         
         반드시 아래 번호 목록에 있는 숫자만 사용하세요. 목록에 없는 번호나 파일명을 만들어내지 마세요.
