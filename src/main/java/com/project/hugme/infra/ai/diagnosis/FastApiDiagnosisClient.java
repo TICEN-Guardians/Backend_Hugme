@@ -2,6 +2,8 @@ package com.project.hugme.infra.ai.diagnosis;
 
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertyResolveRequest;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertyResolveResponse;
+import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisRequest;
+import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -54,6 +56,26 @@ public class FastApiDiagnosisClient {
         if (response == null) {
             throw new IllegalStateException(
                     "FastAPI 주소 확인 응답이 없습니다."
+            );
+        }
+
+        return response;
+    }
+
+    public FastApiDiagnosisResponse analyze(
+            FastApiDiagnosisRequest request
+    ) {
+        FastApiDiagnosisResponse response = restClient
+                .post()
+                .uri("/internal/v1/diagnoses/analyze")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .retrieve()
+                .body(FastApiDiagnosisResponse.class);
+
+        if (response == null) {
+            throw new IllegalStateException(
+                    "FastAPI 진단 응답이 없습니다."
             );
         }
 

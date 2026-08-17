@@ -108,4 +108,14 @@ public class Diagnosis {
 
         return diagnosis;
     }
+
+    public void markAnalyzing() {
+        status = DiagnosisStatus.ANALYZING;
+    }
+
+    public void complete(String normalizedAddress, HousingType housingType) {
+        this.normalizedAddress = normalizedAddress;
+        this.housingType = housingType;
+        status = DiagnosisStatus.COMPLETED;
+    }
 }

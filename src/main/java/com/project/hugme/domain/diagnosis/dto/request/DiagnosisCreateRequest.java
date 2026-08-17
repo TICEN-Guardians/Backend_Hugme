@@ -15,8 +15,7 @@ public record DiagnosisCreateRequest(
         @Size(max = 500)
         String address,
 
-        @NotBlank
-        @Size(max = 100)
+        @Size(min = 1, max = 100)
         String dongName,
 
         @Size(max = 100)
