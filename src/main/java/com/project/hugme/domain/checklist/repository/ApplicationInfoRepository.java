@@ -21,4 +21,6 @@ public interface ApplicationInfoRepository
             @Param("applicationId") Long applicationId,
             @Param("userId") Long userId
     );
+
+
 }
