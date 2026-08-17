@@ -29,6 +29,9 @@ public record DiagnosisCreateRequest(
         LocalDate contractDate,
 
         @DecimalMin("0.01")
-        BigDecimal contractArea
+        BigDecimal contractArea,
+
+        @Size(max = 100)
+        String landlordName
 ) {
 }

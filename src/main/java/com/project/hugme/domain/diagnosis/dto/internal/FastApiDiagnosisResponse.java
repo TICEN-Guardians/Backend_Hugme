@@ -17,7 +17,8 @@ public record FastApiDiagnosisResponse(
         String valuationReliability,
         List<String> dataWarnings,
         List<String> fallbackFeatures,
-        String report
+        String report,
+        ReportDetail reportDetail
 ) {
     public record Property(
             String normalizedAddress,
@@ -55,6 +56,56 @@ public record FastApiDiagnosisResponse(
             Integer rollover,
             Integer property,
             Integer market
+    ) {
+    }
+
+    public record ReportDetail(
+            String title,
+            String gradeLabel,
+            List<ReportSection> sections,
+            List<ReportNotice> notices,
+            List<PriceScenarioPoint> priceScenarios,
+            ReportExplanation explanation
+    ) {
+    }
+
+    public record ReportSection(
+            String key,
+            String title,
+            String description,
+            List<ReportMetric> metrics
+    ) {
+    }
+
+    public record ReportMetric(
+            String key,
+            String label,
+            Object value,
+            String unit
+    ) {
+    }
+
+    public record ReportNotice(
+            String code,
+            String title,
+            String description,
+            String severity
+    ) {
+    }
+
+    public record PriceScenarioPoint(
+            String label,
+            Integer priceDropRate,
+            Double collateralBurdenRate
+    ) {
+    }
+
+    public record ReportExplanation(
+            String summary,
+            List<String> keyFindings,
+            List<String> cautions,
+            List<String> recommendedActions,
+            String generatedBy
     ) {
     }
 }

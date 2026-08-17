@@ -74,6 +74,9 @@ public class Diagnosis {
     @Column(name = "contract_area", precision = 12, scale = 2)
     private BigDecimal contractArea;
 
+    @Column(name = "landlord_name", length = 100)
+    private String landlordName;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     private DiagnosisStatus status;
@@ -93,7 +96,8 @@ public class Diagnosis {
             String hoName,
             Long deposit,
             LocalDate contractDate,
-            BigDecimal contractArea
+            BigDecimal contractArea,
+            String landlordName
     ) {
         Diagnosis diagnosis = new Diagnosis();
 
@@ -104,6 +108,7 @@ public class Diagnosis {
         diagnosis.deposit = deposit;
         diagnosis.contractDate = contractDate;
         diagnosis.contractArea = contractArea;
+        diagnosis.landlordName = landlordName;
         diagnosis.status = DiagnosisStatus.CREATED;
 
         return diagnosis;

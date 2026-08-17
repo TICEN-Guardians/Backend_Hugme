@@ -19,8 +19,10 @@ import com.project.hugme.domain.user.repository.UserRepository;
 import com.project.hugme.infra.ai.diagnosis.FastApiDiagnosisClient;
 import com.project.hugme.infra.ocr.entity.LandlordWatchlistCheck;
 import com.project.hugme.infra.ocr.entity.RegistryResult;
+import com.project.hugme.infra.ocr.entity.RegistryOwner;
 import com.project.hugme.infra.ocr.repository.LandlordWatchlistCheckRepository;
 import com.project.hugme.infra.ocr.repository.RegistryResultRepository;
+import com.project.hugme.infra.ocr.repository.RegistryOwnerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +48,7 @@ public class DiagnosisService {
     private final DiagnosisResultRepository diagnosisResultRepository;
     private final UserRepository userRepository;
     private final RegistryResultRepository registryResultRepository;
+    private final RegistryOwnerRepository registryOwnerRepository;
     private final LandlordWatchlistCheckRepository watchlistCheckRepository;
 
     public PropertySearchResponse searchProperty(
@@ -87,7 +90,8 @@ public class DiagnosisService {
                 request.hoName(),
                 request.deposit(),
                 request.contractDate(),
-                request.contractArea()
+                request.contractArea(),
+                request.landlordName()
         );
 
         Diagnosis savedDiagnosis =
@@ -115,13 +119,20 @@ public class DiagnosisService {
                         .findByRegistryResultRegistryResultIdOrderByCheckIdAsc(
                                 registryResult.getRegistryResultId()
                         );
+        List<RegistryOwner> owners = registryResult == null
+                ? List.of()
+                : registryOwnerRepository
+                        .findByRegistryResultRegistryResultIdOrderByRegistryOwnerIdAsc(
+                                registryResult.getRegistryResultId()
+                        );
 
         diagnosis.markAnalyzing();
         FastApiDiagnosisResponse response = fastApiDiagnosisClient.analyze(
                 FastApiDiagnosisRequest.from(
                         diagnosis,
                         registryResult,
-                        checks
+                        checks,
+                        owners
                 )
         );
         diagnosis.complete(
