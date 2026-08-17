@@ -1,10 +1,11 @@
 package com.project.hugme.domain.chatbot.document.repository;
 
 import com.project.hugme.domain.chatbot.document.dto.DocumentSearchData;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import javax.sql.DataSource;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,13 +14,17 @@ import java.util.Collections;
 import java.util.List;
 
 @Repository
-@RequiredArgsConstructor
 public class DocumentSearchDataRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public List<DocumentSearchData> findAll() {
+    public DocumentSearchDataRepository(
+            @Qualifier("mainDataSource") DataSource dataSource
+    ) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+    }
 
+    public List<DocumentSearchData> findAll() {
         String sql = """
                 SELECT
                     d.document_id,

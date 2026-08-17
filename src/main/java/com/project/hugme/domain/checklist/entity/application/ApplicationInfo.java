@@ -77,6 +77,17 @@ public class ApplicationInfo {
     )
     private Instant updatedAt;
 
+    public static ApplicationInfo create(
+            Application application
+    ) {
+        ApplicationInfo applicationInfo =
+                new ApplicationInfo();
+
+        applicationInfo.application = application;
+
+        return applicationInfo;
+    }
+
     public void updateAndConfirm(
             HousingType housingType,
             String contractAddress,
