@@ -8,12 +8,16 @@ import com.project.hugme.domain.chatbot.document.dto.DocumentPreparationResponse
 import com.project.hugme.domain.chatbot.document.dto.DocumentPreparationSectionResponse;
 import com.project.hugme.domain.chatbot.document.dto.DocumentPreparationUpdateRequest;
 import com.project.hugme.domain.chatbot.document.entity.DocumentPreparationCheck;
+import com.project.hugme.domain.chatbot.document.entity.DocumentChatHistory;
 import com.project.hugme.domain.chatbot.document.repository.DocumentPreparationCheckRepository;
+import com.project.hugme.domain.chatbot.document.repository.DocumentChatHistoryRepository;
 import com.project.hugme.domain.checklist.entity.application.ChecklistDocumentResult;
 import com.project.hugme.domain.checklist.entity.product.ChecklistSection;
 import com.project.hugme.domain.checklist.entity.product.Document;
 import com.project.hugme.domain.checklist.entity.product.SectionCode;
 import com.project.hugme.domain.checklist.repository.ChecklistDocumentResultRepository;
+import com.project.hugme.domain.user.entity.User;
+import com.project.hugme.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
@@ -34,6 +38,8 @@ public class DocumentChatService {
     private final ChatClient.Builder chatClientBuilder;
     private final ChecklistDocumentResultRepository checklistDocumentResultRepository;
     private final DocumentPreparationCheckRepository preparationCheckRepository;
+    private final DocumentChatHistoryRepository chatHistoryRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public DocumentPreparationResponse getPreparationStatus(Long userId, Long applicationId) {
@@ -95,6 +101,7 @@ public class DocumentChatService {
     }
 
     public DocumentChatResponse chat(
+            Long userId,
             DocumentSearchRequest request
     ) throws Exception {
 
@@ -102,10 +109,12 @@ public class DocumentChatService {
                 documentSearchFacade.search(request);
 
         if (searchResults.isEmpty()) {
-            return new DocumentChatResponse(
+            DocumentChatResponse response = new DocumentChatResponse(
                     "해당 질문에 대해 안내할 수 있는 서류 정보를 찾지 못했습니다.",
                     List.of()
             );
+            saveChatHistory(userId, request, response);
+            return response;
         }
 
         String context = buildContext(searchResults);
@@ -149,10 +158,29 @@ public class DocumentChatService {
 
         List<String> sources = extractSources(searchResults);
 
-        return new DocumentChatResponse(
+        DocumentChatResponse response = new DocumentChatResponse(
                 answer,
                 sources
         );
+        saveChatHistory(userId, request, response);
+        return response;
+    }
+
+    private void saveChatHistory(
+            Long userId,
+            DocumentSearchRequest request,
+            DocumentChatResponse response
+    ) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        chatHistoryRepository.save(DocumentChatHistory.create(
+                user,
+                request.documentId(),
+                request.question(),
+                response.answer(),
+                String.join("\n", response.sources())
+        ));
     }
 
     private String buildContext(

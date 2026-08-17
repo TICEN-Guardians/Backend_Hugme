@@ -30,11 +30,12 @@ public class DocumentChatController {
     )
     @PostMapping("/messages")
     public ResponseEntity<DocumentChatResponse> chat(
+            @AuthenticationPrincipal(expression = "userId") Long userId,
             @RequestBody DocumentSearchRequest request
     ) throws Exception {
 
         DocumentChatResponse response =
-                documentChatService.chat(request);
+                documentChatService.chat(userId, request);
 
         return ResponseEntity.ok(response);
     }
