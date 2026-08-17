@@ -301,7 +301,7 @@ public class ApplicationChecklistService {
                         "신청정보를 찾을 수 없습니다."
                 ));
 
-        List<Long> selectedOptionIds = new ArrayList<>();
+        List<Long> selectedOptionIds = request.selectedOptionIds();
 
         /*
          *  3. optionIds를 기준으로 QuestionOption과 연결된 childQuestions를 함께 조회
