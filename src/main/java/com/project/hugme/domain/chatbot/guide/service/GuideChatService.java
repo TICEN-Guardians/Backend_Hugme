@@ -47,6 +47,14 @@ public class GuideChatService {
             );
         }
 
+        if ("off_topic".equals(route.category())) {
+            return new ChatResponse(
+                    sessionId,
+                    "죄송해요, 저는 상담과 관련된 내용만 도와드릴 수 있어요.",
+                    route.category(), List.of(), List.of(), null
+            );
+        }
+
         List<Document> results = hybridSearchService.search(request.message(), route.sources());
         String answer = answerGenerationService.generate(sessionId, request.message(), results);
 
