@@ -3,12 +3,27 @@ package com.project.hugme.domain.chatbot.document.service;
 import com.project.hugme.domain.chatbot.document.dto.DocumentChatResponse;
 import com.project.hugme.domain.chatbot.document.dto.DocumentSearchRequest;
 import com.project.hugme.domain.chatbot.document.dto.DocumentSearchResponse;
+import com.project.hugme.domain.chatbot.document.dto.DocumentPreparationDocumentResponse;
+import com.project.hugme.domain.chatbot.document.dto.DocumentPreparationResponse;
+import com.project.hugme.domain.chatbot.document.dto.DocumentPreparationSectionResponse;
+import com.project.hugme.domain.chatbot.document.dto.DocumentPreparationUpdateRequest;
+import com.project.hugme.domain.chatbot.document.entity.DocumentPreparationCheck;
+import com.project.hugme.domain.chatbot.document.repository.DocumentPreparationCheckRepository;
+import com.project.hugme.domain.checklist.entity.application.ChecklistDocumentResult;
+import com.project.hugme.domain.checklist.entity.product.ChecklistSection;
+import com.project.hugme.domain.checklist.entity.product.Document;
+import com.project.hugme.domain.checklist.entity.product.SectionCode;
+import com.project.hugme.domain.checklist.repository.ChecklistDocumentResultRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -17,6 +32,67 @@ public class DocumentChatService {
 
     private final DocumentSearchFacade documentSearchFacade;
     private final ChatClient.Builder chatClientBuilder;
+    private final ChecklistDocumentResultRepository checklistDocumentResultRepository;
+    private final DocumentPreparationCheckRepository preparationCheckRepository;
+
+    @Transactional(readOnly = true)
+    public DocumentPreparationResponse getPreparationStatus(Long userId, Long applicationId) {
+        List<ChecklistDocumentResult> results =
+                checklistDocumentResultRepository.findCurrentDocuments(applicationId, userId);
+        Set<Long> checkedDocumentIds = preparationCheckRepository.findCheckedDocumentIds(applicationId);
+        Map<SectionCode, List<DocumentPreparationDocumentResponse>> documentsBySection =
+                new EnumMap<>(SectionCode.class);
+        Map<SectionCode, String> sectionNames = new EnumMap<>(SectionCode.class);
+
+        for (ChecklistDocumentResult result : results) {
+            Document document = result.getDocument();
+            ChecklistSection section = document.getItem().getSection();
+            sectionNames.putIfAbsent(section.getSectionCode(), section.getSectionName());
+            documentsBySection.computeIfAbsent(section.getSectionCode(), ignored -> new ArrayList<>())
+                    .add(DocumentPreparationDocumentResponse.from(
+                            document, checkedDocumentIds.contains(document.getDocumentId())));
+        }
+
+        List<DocumentPreparationSectionResponse> sections = new ArrayList<>();
+        for (SectionCode sectionCode : SectionCode.values()) {
+            List<DocumentPreparationDocumentResponse> documents = documentsBySection.get(sectionCode);
+            if (documents != null && !documents.isEmpty()) {
+                sections.add(new DocumentPreparationSectionResponse(
+                        sectionCode, sectionNames.get(sectionCode), documents));
+            }
+        }
+
+        int preparedCount = (int) results.stream()
+                .map(result -> result.getDocument().getDocumentId())
+                .filter(checkedDocumentIds::contains)
+                .count();
+        return new DocumentPreparationResponse(applicationId, results.size(), preparedCount, sections);
+    }
+
+    @Transactional
+    public DocumentPreparationResponse updatePreparationStatus(
+            Long userId,
+            Long applicationId,
+            Long documentId,
+            DocumentPreparationUpdateRequest request
+    ) {
+        ChecklistDocumentResult result = checklistDocumentResultRepository
+                .findCurrentDocuments(applicationId, userId).stream()
+                .filter(item -> item.getDocument().getDocumentId().equals(documentId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("준비 서류를 찾을 수 없습니다."));
+
+        if (request.prepared()) {
+            if (!preparationCheckRepository.findCheckedDocumentIds(applicationId).contains(documentId)) {
+                preparationCheckRepository.save(DocumentPreparationCheck.create(
+                        result.getApplication(), result.getDocument()));
+            }
+        } else {
+            preparationCheckRepository.deleteByApplicationApplicationIdAndDocumentDocumentId(
+                    applicationId, documentId);
+        }
+        return getPreparationStatus(userId, applicationId);
+    }
 
     public DocumentChatResponse chat(
             DocumentSearchRequest request
