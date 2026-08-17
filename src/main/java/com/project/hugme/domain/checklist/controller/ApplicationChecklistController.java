@@ -154,7 +154,31 @@ public class ApplicationChecklistController {
     }
 
     @Operation(
-            summary = "7. 현재 준비서류 조회",
+            summary = "7. 최종 준비서류 조회",
+            description = "기본·추가·할인 분류별 최종 준비서류를 조회합니다."
+    )
+    @GetMapping("/{applicationId}/result-documents")
+    public ResponseEntity<ResultDocumentListResponse>
+    getResultDocuments(
+            @AuthenticationPrincipal(expression = "userId")
+            Long userId,
+
+            @PathVariable("applicationId")
+            Long applicationId
+    ) {
+        ResultDocumentListResponse response =
+                myDocumentService
+                        .getResultDocuments(
+                                userId,
+                                applicationId
+                        );
+
+        return ResponseEntity.ok(response);
+    }
+
+
+    @Operation(
+            summary = "8. 현재 준비서류 조회",
             description = "기본·추가·할인 분류별 최종 준비서류를 조회합니다."
     )
     @GetMapping("/{applicationId}/documents")
