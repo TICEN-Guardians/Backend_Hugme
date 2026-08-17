@@ -4,8 +4,7 @@ import com.project.hugme.domain.checklist.dto.common.DocumentResponse;
 
 import java.util.List;
 
-public record MyDocumentItemResponse(
-
+public record ResultDocumentItemResponse(
         Long itemId,
         String itemName,
         Integer sortOrder,
@@ -16,5 +15,6 @@ public record MyDocumentItemResponse(
         Integer groupSortOrder,
 
         List<DocumentResponse> documents
+
 ) {
 }
