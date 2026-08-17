@@ -64,6 +64,8 @@ public class DiagnosisService {
         Diagnosis diagnosis = Diagnosis.create(
                 user,
                 request.address(),
+                request.dongName(),
+                request.hoName(),
                 request.deposit(),
                 request.contractDate(),
                 request.contractArea()

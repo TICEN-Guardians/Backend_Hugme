@@ -55,6 +55,12 @@ public class Diagnosis {
     @Column(name = "normalized_address", length = 500)
     private String normalizedAddress;
 
+    @Column(name = "dong_name", length = 100)
+    private String dongName;
+
+    @Column(name = "ho_name", length = 100)
+    private String hoName;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "housing_type", length = 30)
     private HousingType housingType;
@@ -83,6 +89,8 @@ public class Diagnosis {
     public static Diagnosis create(
             User user,
             String address,
+            String dongName,
+            String hoName,
             Long deposit,
             LocalDate contractDate,
             BigDecimal contractArea
@@ -91,6 +99,8 @@ public class Diagnosis {
 
         diagnosis.user = user;
         diagnosis.address = address;
+        diagnosis.dongName = dongName;
+        diagnosis.hoName = hoName;
         diagnosis.deposit = deposit;
         diagnosis.contractDate = contractDate;
         diagnosis.contractArea = contractArea;
