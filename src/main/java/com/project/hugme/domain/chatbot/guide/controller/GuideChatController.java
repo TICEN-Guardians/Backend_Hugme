@@ -2,7 +2,6 @@ package com.project.hugme.domain.chatbot.guide.controller;
 
 import com.project.hugme.domain.auth.security.CustomUserDetails;
 import com.project.hugme.domain.chatbot.guide.dto.ChatRequest;
-import com.project.hugme.domain.chatbot.guide.dto.ChatResponse;
 import com.project.hugme.domain.chatbot.guide.dto.EntryQuestion;
 import com.project.hugme.domain.chatbot.guide.dto.GuideChatHistoryDto;
 import com.project.hugme.domain.chatbot.guide.repository.GuideChatHistoryRepository;
@@ -10,9 +9,12 @@ import com.project.hugme.domain.chatbot.guide.service.GuideChatService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -25,9 +27,12 @@ public class GuideChatController {
     private final GuideChatService guideChatService;
     private final GuideChatHistoryRepository guideChatHistoryRepository;
 
-    @PostMapping("/messages")
-    @Operation(summary = "챗봇 메시지 전송", description = "사용자 질문을 받아 카테고리 분류, 검색, 답변 생성을 수행합니다.")
-    public ChatResponse sendMessage(@RequestBody ChatRequest request) {
+    @PostMapping(value = "/messages", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @Operation(
+            summary = "챗봇 메시지 전송(SSE 스트리밍)",
+            description = "사용자 질문을 받아 카테고리 분류, 검색, 답변 생성을 수행하고, 답변을 토큰 단위 스트리밍합니다. "
+    )
+    public Flux<ServerSentEvent<Object>> sendMessage(@RequestBody ChatRequest request) {
         Long userId = extractUserId();
         return guideChatService.handle(userId, request);
     }
