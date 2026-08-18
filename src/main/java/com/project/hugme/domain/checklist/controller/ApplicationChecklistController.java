@@ -154,25 +154,71 @@ public class ApplicationChecklistController {
     }
 
     @Operation(
-            summary = "7. 현재 준비서류 조회",
+            summary = "7. 최종 준비서류 조회",
             description = "기본·추가·할인 분류별 최종 준비서류를 조회합니다."
     )
-    @GetMapping("/{applicationId}/documents")
-    public ResponseEntity<MyDocumentListResponse>
-    getCurrentDocuments(
+    @GetMapping("/{applicationId}/result-documents")
+    public ResponseEntity<ResultDocumentListResponse>
+    getResultDocuments(
             @AuthenticationPrincipal(expression = "userId")
             Long userId,
 
             @PathVariable("applicationId")
             Long applicationId
     ) {
-        MyDocumentListResponse response =
+        ResultDocumentListResponse response =
                 myDocumentService
-                        .getCurrentDocuments(
+                        .getResultDocuments(
                                 userId,
                                 applicationId
                         );
 
         return ResponseEntity.ok(response);
     }
+
+    @Operation(
+            summary = "8. 최종 준비서류 유무 확인",
+            description = "최종단계 완료 유무를 확인합니다."
+    )
+    @GetMapping("/check")
+    public ResponseEntity<Boolean>
+    getResultDocumentsCheck(
+            @AuthenticationPrincipal(expression = "userId")
+            Long userId
+    ) {
+        boolean exists =
+                myDocumentService
+                        .hasResultDocuments(
+                                userId
+                        );
+
+        return ResponseEntity.ok(exists);
+    }
+
+
+
+//    @Operation(
+//            summary = "8. 현재 준비서류 조회",
+//            description = "기본·추가·할인 분류별 최종 준비서류를 조회합니다."
+//    )
+//    @GetMapping("/{applicationId}/documents")
+//    public ResponseEntity<MyDocumentListResponse>
+//    getCurrentDocuments(
+//            @AuthenticationPrincipal(expression = "userId")
+//            Long userId,
+//
+//            @PathVariable("applicationId")
+//            Long applicationId
+//    ) {
+//        MyDocumentListResponse response =
+//                myDocumentService
+//                        .getCurrentDocuments(
+//                                userId,
+//                                applicationId
+//                        );
+//
+//        return ResponseEntity.ok(response);
+//    }
+
+
 }

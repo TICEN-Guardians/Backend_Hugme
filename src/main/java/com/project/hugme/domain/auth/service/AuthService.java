@@ -57,7 +57,7 @@ public class AuthService {
                 UUID.randomUUID().toString();
 
         String verificationUrl =
-                "http://localhost:8080/api/auth/mail/verify?token="
+                "https://hugm3.com/api/auth/mail/verify?token="
                         + verificationToken;
 
 
