@@ -209,8 +209,8 @@ public class MyDocumentService {
         );
     }
 
-    public boolean hasResultDocuments(Long userId, Long applicationId) {
-        Application application = applicationRepository.findByApplicationIdAndUser_UserId(applicationId,userId)
+    public boolean hasResultDocuments(Long userId) {
+        Application application = applicationRepository.findByUser_UserId(userId)
                 .orElseThrow(()->new IllegalArgumentException("신청 정보를 찾을 수 없습니다."));
 
         boolean result=false;

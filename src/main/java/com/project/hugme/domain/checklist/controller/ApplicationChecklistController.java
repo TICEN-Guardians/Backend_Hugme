@@ -177,23 +177,19 @@ public class ApplicationChecklistController {
     }
 
     @Operation(
-            summary = "5. 최종 준비서류 유무 확인",
+            summary = "8. 최종 준비서류 유무 확인",
             description = "최종단계 완료 유무를 확인합니다."
     )
-    @GetMapping("/{applicationId}/check")
+    @GetMapping("/check")
     public ResponseEntity<Boolean>
     getResultDocumentsCheck(
             @AuthenticationPrincipal(expression = "userId")
-            Long userId,
-
-            @PathVariable("applicationId")
-            Long applicationId
+            Long userId
     ) {
         boolean exists =
                 myDocumentService
                         .hasResultDocuments(
-                                userId,
-                                applicationId
+                                userId
                         );
 
         return ResponseEntity.ok(exists);
