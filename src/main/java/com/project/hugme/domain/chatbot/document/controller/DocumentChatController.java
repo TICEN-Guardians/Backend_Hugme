@@ -41,30 +41,28 @@ public class DocumentChatController {
     }
 
 
-    @GetMapping("/{applicationId}/preparation")
+    @GetMapping("/preparation")
     @Operation(
             summary = "서류 및 준비 상태 조회",
             description = "준비해야 하는 서류 목록을 반환합니다."
     )
     public ResponseEntity<DocumentPreparationResponse> getPreparationStatus(
-            @AuthenticationPrincipal(expression = "userId") Long userId,
-            @PathVariable Long applicationId
+            @AuthenticationPrincipal(expression = "userId") Long userId
     ) {
-        return ResponseEntity.ok(documentChatService.getPreparationStatus(userId, applicationId));
+        return ResponseEntity.ok(documentChatService.getPreparationStatus(userId));
     }
 
-    @PutMapping("/{applicationId}/preparation/{documentId}")
+    @PutMapping("/preparation/{documentId}")
     @Operation(
             summary = "서류 준비 상태 변경",
             description = "각 서류의 준비 상태를 변경합니다."
     )
     public ResponseEntity<DocumentPreparationResponse> updatePreparationStatus(
             @AuthenticationPrincipal(expression = "userId") Long userId,
-            @PathVariable Long applicationId,
             @PathVariable Long documentId,
             @Valid @RequestBody DocumentPreparationUpdateRequest request
     ) {
         return ResponseEntity.ok(documentChatService.updatePreparationStatus(
-                userId, applicationId, documentId, request));
+                userId, documentId, request));
     }
 }
