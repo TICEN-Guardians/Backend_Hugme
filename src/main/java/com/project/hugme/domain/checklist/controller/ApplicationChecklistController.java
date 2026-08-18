@@ -35,7 +35,7 @@ public class ApplicationChecklistController {
 
     @Operation(
             summary = "1. 맞춤 체크리스트 진입",
-            description = "완료된 동일 상품 신청이 있으면 해당 결과를 반환하고, 없으면 새로운 신청을 생성합니다."
+            description = "이전내역이 존재하면 삭제 후 새로운 신청을 생성합니다."
     )
     @PostMapping
     public ResponseEntity<ApplicationCreateResponse> createApplication(
@@ -48,9 +48,23 @@ public class ApplicationChecklistController {
         return ResponseEntity.ok(response);
 
     }
+    @Operation(
+            summary = "2. 기존 체크리스트 진입",
+            description = "이전 내역이 있으면 그 내용을 불러옵니다."
+    )
+    @GetMapping("/current")
+    public ResponseEntity<ApplicationCreateResponse> getCurrentApplication(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal(expression = "userId") Long userId
+    ) {
+        ApplicationCreateResponse response = applicationChecklistService.getCurrentApplication(userId);
+
+        return ResponseEntity.ok(response);
+
+    }
 
     @Operation(
-            summary = "2. 임대차계약서 업로드 및 OCR 분석",
+            summary = "3. 임대차계약서 업로드 및 OCR 분석",
             description = "임대차계약서 파일을 업로드하고 OCR 분석을 수행합니다."
     )
     @PostMapping(
@@ -70,7 +84,7 @@ public class ApplicationChecklistController {
 
 
     @Operation(
-            summary = "3. OCR 결과 조회",
+            summary = "4. OCR 결과 조회",
             description = "로그인 사용자의 applicationId에 저장된 임대차계약서 OCR 분석 결과를 조회합니다."
     )
     @GetMapping("/{applicationId}/info")
@@ -85,7 +99,7 @@ public class ApplicationChecklistController {
     // userid 랑 application의 applicationId
 
     @Operation(
-            summary = "4. OCR 결과 수정 및 확정",
+            summary = "5. OCR 결과 수정 및 확정",
             description = "임대차계약서 OCR 분석 결과를 사용자가 수정하고 최종 확정합니다."
     )
     @PatchMapping("/{applicationId}/info")
@@ -106,7 +120,7 @@ public class ApplicationChecklistController {
     }
 
     @Operation(
-            summary = "5. 질문 목록 조회",
+            summary = "6. 질문 목록 조회",
             description = "신청 상품과 OCR 결과에 맞는 단계별 질문을 조회합니다."
     )
     @GetMapping("/{applicationId}/questions")
@@ -132,7 +146,7 @@ public class ApplicationChecklistController {
     }
 
     @Operation(
-            summary = "6. 질문 답변 제출",
+            summary = "7. 질문 답변 제출",
             description = "단계별 질문 답변을 제출하고 추가 질문 또는 최종 서류를 계산합니다."
     )
     @PostMapping("/{applicationId}/answers")
@@ -154,7 +168,7 @@ public class ApplicationChecklistController {
     }
 
     @Operation(
-            summary = "7. 최종 준비서류 조회",
+            summary = "8. 최종 준비서류 조회",
             description = "기본·추가·할인 분류별 최종 준비서류를 조회합니다."
     )
     @GetMapping("/{applicationId}/result-documents")
@@ -177,7 +191,7 @@ public class ApplicationChecklistController {
     }
 
     @Operation(
-            summary = "8. 최종 준비서류 유무 확인",
+            summary = "9. 최종 준비서류 유무 확인",
             description = "최종단계 완료 유무를 확인합니다."
     )
     @GetMapping("/check")
