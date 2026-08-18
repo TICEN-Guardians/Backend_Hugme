@@ -6,7 +6,10 @@ import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisRequest;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.client.RestClient;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertySearchRequest;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertySearchResponse;
@@ -80,5 +83,33 @@ public class FastApiDiagnosisClient {
         }
 
         return response;
+    }
+
+    public void uploadRegistry(
+            Long analysisId,
+            MultipartFile file
+    ) {
+        try {
+            MultipartBodyBuilder body = new MultipartBodyBuilder();
+            body.part("analysis_id", analysisId.toString());
+            body.part("files", new ByteArrayResource(file.getBytes()) {
+                @Override
+                public String getFilename() {
+                    return file.getOriginalFilename();
+                }
+            }).contentType(MediaType.APPLICATION_PDF);
+
+            restClient.post()
+                    .uri("/register/check")
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(body.build())
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (java.io.IOException exception) {
+            throw new IllegalStateException(
+                    "등기부등본 파일을 읽을 수 없습니다.",
+                    exception
+            );
+        }
     }
 }

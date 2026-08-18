@@ -26,6 +26,7 @@ import com.project.hugme.infra.ocr.repository.RegistryOwnerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertySearchRequest;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertySearchResponse;
 import com.project.hugme.domain.diagnosis.dto.request.PropertySearchRequest;
@@ -91,6 +92,8 @@ public class DiagnosisService {
                 request.deposit(),
                 request.contractDate(),
                 request.contractArea(),
+                request.exclusiveArea(),
+                request.floor(),
                 request.landlordName()
         );
 
@@ -169,6 +172,24 @@ public class DiagnosisService {
                     exception
             );
         }
+    }
+
+    public void uploadRegistry(
+            Long userId,
+            Long analysisId,
+            MultipartFile file
+    ) {
+        diagnosisRepository
+                .findByAnalysisIdAndUserUserId(analysisId, userId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "진단 요청을 찾을 수 없습니다."
+                ));
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "등기부등본 PDF 파일이 필요합니다."
+            );
+        }
+        fastApiDiagnosisClient.uploadRegistry(analysisId, file);
     }
 
     private void saveResult(

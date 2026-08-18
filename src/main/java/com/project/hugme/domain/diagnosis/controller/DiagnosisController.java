@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
 
 @RestController
 @RequestMapping("/api/diagnoses")
@@ -68,6 +71,28 @@ public class DiagnosisController {
         return ResponseEntity.ok(
                 diagnosisService.analyzeDiagnosis(userId, analysisId)
         );
+    }
+
+    @PostMapping(
+            value = "/{analysisId}/registry",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    @Operation(
+            summary = "등기부등본 분석",
+            description = "등기부등본 PDF를 OCR 분석하고 진단에 연결합니다."
+    )
+    public ResponseEntity<Void> uploadRegistry(
+            @AuthenticationPrincipal(expression = "userId")
+            Long userId,
+
+            @PathVariable
+            Long analysisId,
+
+            @RequestPart("file")
+            MultipartFile file
+    ) {
+        diagnosisService.uploadRegistry(userId, analysisId, file);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{analysisId}")

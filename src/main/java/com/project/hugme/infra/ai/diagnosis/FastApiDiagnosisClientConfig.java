@@ -16,7 +16,7 @@ public class FastApiDiagnosisClientConfig {
             RestClient.Builder builder,
             @Value("${hugme.ai.base-url}") String baseUrl,
             @Value("${hugme.ai.connect-timeout:10s}") Duration connectTimeout,
-            @Value("${hugme.ai.read-timeout:180s}") Duration readTimeout
+            @Value("${hugme.ai.read-timeout:300s}") Duration readTimeout
     ) {
         SimpleClientHttpRequestFactory requestFactory =
                 new SimpleClientHttpRequestFactory();

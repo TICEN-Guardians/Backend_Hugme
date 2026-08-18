@@ -31,6 +31,12 @@ public record DiagnosisCreateRequest(
         @DecimalMin("0.01")
         BigDecimal contractArea,
 
+        @DecimalMin("0.01")
+        BigDecimal exclusiveArea,
+
+        @NotNull
+        Integer floor,
+
         @Size(max = 100)
         String landlordName
 ) {

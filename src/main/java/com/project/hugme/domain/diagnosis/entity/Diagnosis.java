@@ -74,6 +74,12 @@ public class Diagnosis {
     @Column(name = "contract_area", precision = 12, scale = 2)
     private BigDecimal contractArea;
 
+    @Column(name = "exclusive_area", precision = 12, scale = 2)
+    private BigDecimal exclusiveArea;
+
+    @Column(name = "target_floor")
+    private Integer floor;
+
     @Column(name = "landlord_name", length = 100)
     private String landlordName;
 
@@ -97,6 +103,8 @@ public class Diagnosis {
             Long deposit,
             LocalDate contractDate,
             BigDecimal contractArea,
+            BigDecimal exclusiveArea,
+            Integer floor,
             String landlordName
     ) {
         Diagnosis diagnosis = new Diagnosis();
@@ -108,6 +116,8 @@ public class Diagnosis {
         diagnosis.deposit = deposit;
         diagnosis.contractDate = contractDate;
         diagnosis.contractArea = contractArea;
+        diagnosis.exclusiveArea = exclusiveArea;
+        diagnosis.floor = floor;
         diagnosis.landlordName = landlordName;
         diagnosis.status = DiagnosisStatus.CREATED;
 

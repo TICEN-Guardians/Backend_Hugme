@@ -18,6 +18,8 @@ public record FastApiDiagnosisRequest(
         Long deposit,
         LocalDate contractDate,
         BigDecimal contractArea,
+        BigDecimal exclusiveArea,
+        Integer floor,
         RegistryRisk registryRisk
 ) {
     public static FastApiDiagnosisRequest from(
@@ -43,6 +45,8 @@ public record FastApiDiagnosisRequest(
                 diagnosis.getDeposit(),
                 diagnosis.getContractDate(),
                 diagnosis.getContractArea(),
+                diagnosis.getExclusiveArea(),
+                diagnosis.getFloor(),
                 risk
         );
     }
