@@ -11,7 +11,11 @@ import com.project.hugme.domain.user.entity.User;
 import com.project.hugme.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.UUID;
@@ -29,7 +33,7 @@ public class GuideChatService {
     private final GuideChatHistoryRepository guideChatHistoryRepository;
     private final UserRepository userRepository;
 
-    public ChatResponse handle(Long userId, ChatRequest request) {
+    public Flux<ServerSentEvent<Object>> handle(Long userId, ChatRequest request) {
         String sessionId = resolveSessionId(userId, request);
 
         var route = intentClassificationService.route(request.message());
@@ -42,7 +46,7 @@ public class GuideChatService {
                         route.category(), List.of(), List.of(), null
                 );
                 saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
-                return response;
+                return streamFinalAnswer(response);
             }
             FeatureType feature = route.featureType();
             String answer = feature.description() + "이에요. " + feature.label() + "으로 이동하시겠어요?";
@@ -51,14 +55,14 @@ public class GuideChatService {
                     sessionId, answer, route.category(), List.of(), List.of(), redirect
             );
             saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
-            return response;
+            return streamFinalAnswer(response);
         }
 
         if ("meta".equals(route.category())) {
             String answer = metaAnswerService.generate(sessionId, request.message());
             ChatResponse response = new ChatResponse(sessionId, answer, route.category(), List.of(), List.of(), null);
             saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
-            return response;
+            return streamFinalAnswer(response);
         }
 
         if ("off_topic".equals(route.category())) {
@@ -68,11 +72,10 @@ public class GuideChatService {
                     route.category(), List.of(), List.of(), null
             );
             saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
-            return response;
+            return streamFinalAnswer(response);
         }
 
         List<Document> results = hybridSearchService.search(request.message(), route.sources());
-        String answer = answerGenerationService.generate(sessionId, request.message(), results);
 
         List<SourceDto> sources = results.stream()
                 .map(doc -> new SourceDto(
@@ -81,11 +84,32 @@ public class GuideChatService {
                 ))
                 .toList();
 
-        List<String> suggestedQuestions = suggestedQuestionService.suggest(request.message(), answer);
+        StringBuilder answerBuilder = new StringBuilder();
 
-        ChatResponse response = new ChatResponse(sessionId, answer, route.category(), sources, suggestedQuestions, null);
-        saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
-        return response;
+        Flux<ServerSentEvent<Object>> tokenEvents = answerGenerationService
+                .generateStream(sessionId, request.message(), results)
+                .doOnNext(answerBuilder::append)
+                .map(chunk -> ServerSentEvent.builder((Object) chunk).event("token").build());
+
+        Mono<ServerSentEvent<Object>> doneEvent = Mono.fromCallable(() -> {
+                    String answer = answerBuilder.toString();
+                    List<String> suggestedQuestions = suggestedQuestionService.suggest(request.message(), answer);
+                    ChatResponse response = new ChatResponse(
+                            sessionId, answer, route.category(), sources, suggestedQuestions, null
+                    );
+                    saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
+                    return ServerSentEvent.builder((Object) response).event("done").build();
+                })
+                .subscribeOn(Schedulers.boundedElastic());
+
+        return tokenEvents.concatWith(doneEvent);
+    }
+
+    private Flux<ServerSentEvent<Object>> streamFinalAnswer(ChatResponse response) {
+        return Flux.just(
+                ServerSentEvent.builder((Object) response.answer()).event("token").build(),
+                ServerSentEvent.builder((Object) response).event("done").build()
+        );
     }
 
     private void saveHistoryIfLoggedIn(Long userId, String sessionId, String question, ChatResponse response) {
