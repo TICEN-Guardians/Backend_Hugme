@@ -16,6 +16,8 @@ import com.project.hugme.domain.checklist.entity.product.ChecklistSection;
 import com.project.hugme.domain.checklist.entity.product.Document;
 import com.project.hugme.domain.checklist.entity.product.SectionCode;
 import com.project.hugme.domain.checklist.repository.ChecklistDocumentResultRepository;
+import com.project.hugme.domain.checklist.entity.application.Application;
+import com.project.hugme.domain.checklist.repository.ApplicationRepository;
 import com.project.hugme.domain.user.entity.User;
 import com.project.hugme.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,12 +39,15 @@ public class DocumentChatService {
     private final DocumentSearchFacade documentSearchFacade;
     private final ChatClient.Builder chatClientBuilder;
     private final ChecklistDocumentResultRepository checklistDocumentResultRepository;
+    private final ApplicationRepository applicationRepository;
     private final DocumentPreparationCheckRepository preparationCheckRepository;
     private final DocumentChatHistoryRepository chatHistoryRepository;
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public DocumentPreparationResponse getPreparationStatus(Long userId, Long applicationId) {
+    public DocumentPreparationResponse getPreparationStatus(Long userId) {
+        Application application = getApplicationByUserId(userId);
+        Long applicationId = application.getApplicationId();
         List<ChecklistDocumentResult> results =
                 checklistDocumentResultRepository.findCurrentDocuments(applicationId, userId);
         Set<Long> checkedDocumentIds = preparationCheckRepository.findCheckedDocumentIds(applicationId);
@@ -78,10 +83,11 @@ public class DocumentChatService {
     @Transactional
     public DocumentPreparationResponse updatePreparationStatus(
             Long userId,
-            Long applicationId,
             Long documentId,
             DocumentPreparationUpdateRequest request
     ) {
+        Application application = getApplicationByUserId(userId);
+        Long applicationId = application.getApplicationId();
         ChecklistDocumentResult result = checklistDocumentResultRepository
                 .findCurrentDocuments(applicationId, userId).stream()
                 .filter(item -> item.getDocument().getDocumentId().equals(documentId))
@@ -97,7 +103,12 @@ public class DocumentChatService {
             preparationCheckRepository.deleteByApplicationApplicationIdAndDocumentDocumentId(
                     applicationId, documentId);
         }
-        return getPreparationStatus(userId, applicationId);
+        return getPreparationStatus(userId);
+    }
+
+    private Application getApplicationByUserId(Long userId) {
+        return applicationRepository.findByUser_UserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("신청 정보를 찾을 수 없습니다."));
     }
 
     public DocumentChatResponse chat(
