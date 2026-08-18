@@ -1,5 +1,6 @@
 package com.project.hugme.domain.checklist.entity.application;
 
+import com.project.hugme.domain.chatbot.document.entity.DocumentPreparationCheck;
 import com.project.hugme.domain.checklist.entity.product.Product;
 import com.project.hugme.domain.user.entity.User;
 import jakarta.persistence.*;
@@ -9,6 +10,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "applications")
@@ -51,6 +54,33 @@ public class Application {
     )
     private Instant createdAt;
 
+    @OneToOne(
+            mappedBy = "application",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true
+    )
+    private ApplicationInfo applicationInfo;
+
+    @OneToMany(
+            mappedBy = "application",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true
+    )
+    private List<ChecklistDocumentResult> checklistDocumentResults =
+            new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "application",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true
+    )
+    private List<DocumentPreparationCheck> documentPreparationChecks =
+            new ArrayList<>();
+
+
+
+
+
     public static Application create(
             User user,
             Product product
@@ -64,6 +94,8 @@ public class Application {
 
         return application;
     }
+
+
 
     public void complete() {
         this.applicationStatus = ApplicationStatus.DONE;

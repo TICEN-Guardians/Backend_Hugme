@@ -44,23 +44,6 @@ public class Document {
     )
     private String description;
 
-    @Column(
-            name = "issuer",
-            length = 200
-    )
-    private String issuer;
-
-    @Column(
-            name = "validity_rule",
-            length = 300
-    )
-    private String validityRule;
-
-    @Column(
-            name = "submission_form",
-            length = 100
-    )
-    private String submissionForm;
 
     @Column(
             name = "sample_image_url",

@@ -78,21 +78,17 @@ public class ApplicationChecklistService {
                         )
                 );
 
-        //유저의 신청진행 상태가 DONE인지 확인
-        Optional<Application> completedApplication =
-                applicationRepository
-                        .findLatestCompletedApplication(
-                                user.getUserId(),
-                                product.getProductId()
-                        );
+        Optional<Application> existingApplication =
+                applicationRepository.findByUser_UserId(userId);
 
-        //완료가 존재하면 그 결과 반영
-        if (completedApplication.isPresent()) {
-            return ApplicationCreateResponse.from(
-                    completedApplication.get()
-            );
+        if (existingApplication.isPresent()) {
+            Application application = existingApplication.get();
+
+            applicationRepository.delete(application);
+
+            // 자식 데이터와 기존 Application 삭제 SQL을 즉시 실행
+            applicationRepository.flush();
         }
-
         //새로운 Application 엔티티 생성
         Application newApplication = Application.create(user, product);
 
@@ -101,6 +97,32 @@ public class ApplicationChecklistService {
 
         return ApplicationCreateResponse.from(
                 savedApplication
+        );
+
+    }
+
+
+    public ApplicationCreateResponse getCurrentApplication(Long userId) {
+
+       Application application = applicationRepository.findByUser_UserId(userId)
+               .orElseThrow(() ->
+                       new IllegalArgumentException(
+                               "진행 중인 신청이 없습니다."
+                       )
+               );
+
+       /*
+        Long applicationId,
+        ProductCode productCode,
+        ApplicationStatus applicationStatus
+        */
+
+
+        return new ApplicationCreateResponse(
+                application.getApplicationId(),
+                application.getProduct().getProductCode(),
+                application.getApplicationStatus()
+
         );
 
     }

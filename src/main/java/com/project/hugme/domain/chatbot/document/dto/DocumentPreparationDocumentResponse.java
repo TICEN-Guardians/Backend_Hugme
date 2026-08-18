@@ -7,7 +7,6 @@ public record DocumentPreparationDocumentResponse(
         Long documentId,
         String documentName,
         String description,
-        String sampleImageUrl,
         Integer sortOrder,
         Long documentGroupId,
         String documentGroupName,
@@ -18,7 +17,7 @@ public record DocumentPreparationDocumentResponse(
         DocumentGroup group = document.getDocumentGroup();
         return new DocumentPreparationDocumentResponse(
                 document.getDocumentId(), document.getDocumentName(), document.getDescription(),
-                document.getSampleImageUrl(), document.getSortOrder(),
+                document.getSortOrder(),
                 group == null ? null : group.getDocumentGroupId(),
                 group == null ? null : group.getGroupName(),
                 group == null ? null : group.getSortOrder(), prepared

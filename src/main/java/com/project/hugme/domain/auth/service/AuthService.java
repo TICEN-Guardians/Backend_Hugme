@@ -80,6 +80,10 @@ public class AuthService {
         return SignUpResponse.from(savedUser);
     }
 
+    public boolean isEmailDuplicated(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
     @Transactional
     public TokenPair login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())

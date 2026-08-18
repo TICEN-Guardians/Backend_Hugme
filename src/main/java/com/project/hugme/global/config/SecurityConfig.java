@@ -47,10 +47,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/signup",
                                 "/api/auth/login",
+                                "/api/auth/mail/**",
                                 "/api/auth/token/reissue",
                                 "/api/products/**",
                                 "/api/ai/**",
-                                "/api/auth/mail/verify",
                                 "/oauth2/**",
                                 "/login/oauth2/**",
                                 "/swagger-ui/**",

@@ -43,7 +43,24 @@ public class AuthController {
 
     @SecurityRequirements
     @Operation(
-            summary = "2. 이메일 인증",
+            summary = "2. 이메일 중복 확인",
+            description = "회원가입 시 이메일 중복 여부를 확인합니다."
+    )
+    @PostMapping("/mail/check")
+    public ResponseEntity<Boolean> checkEmail(
+            @RequestBody EmailCheckRequest request
+    ) {
+        return ResponseEntity.ok(
+                authService.isEmailDuplicated(request.mail())
+        );
+
+    }
+
+
+
+    @SecurityRequirements
+    @Operation(
+            summary = "3. 이메일 인증",
             description = "이메일로 전달된 인증 토큰을 검증하고 회원 상태를 ACTIVE로 변경합니다."
     )
     @GetMapping("/mail/verify")
@@ -60,7 +77,7 @@ public class AuthController {
 
     @SecurityRequirements
     @Operation(
-            summary = "3. 로그인",
+            summary = "4. 로그인",
             description = "이메일과 비밀번호로 로그인합니다. " +
                     "Access Token은 응답 Body로 반환하고, " +
                     "Refresh Token은 HttpOnly Cookie로 발급합니다."
@@ -85,7 +102,7 @@ public class AuthController {
     }
 
     @Operation(
-            summary = "4. Access Token 재발급",
+            summary = "5. Access Token 재발급",
             description = "HttpOnly Cookie의 Refresh Token을 검증하고 " +
                     "새로운 Access Token과 Refresh Token을 발급합니다."
     )
@@ -118,7 +135,7 @@ public class AuthController {
 
 
     @Operation(
-            summary = "5. 로그아웃",
+            summary = "6. 로그아웃",
             description = "DB에 저장된 Refresh Token을 폐기하고 HttpOnly Cookie를 삭제합니다."
     )
     @PostMapping("/logout")
