@@ -30,4 +30,5 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 
     Optional<Application> findByApplicationIdAndUser_UserId(Long applicationId, Long userId);
 
+    Optional<Application> findByUser_UserId(Long userId);
 }
