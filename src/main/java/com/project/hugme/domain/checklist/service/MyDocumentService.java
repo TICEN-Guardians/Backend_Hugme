@@ -4,6 +4,7 @@ import com.project.hugme.domain.checklist.dto.application.*;
 import com.project.hugme.domain.checklist.dto.common.DocumentResponse;
 import com.project.hugme.domain.checklist.entity.application.Application;
 import com.project.hugme.domain.checklist.entity.application.ApplicationInfo;
+import com.project.hugme.domain.checklist.entity.application.ApplicationStatus;
 import com.project.hugme.domain.checklist.entity.application.ChecklistDocumentResult;
 import com.project.hugme.domain.checklist.entity.product.*;
 import com.project.hugme.domain.checklist.repository.ApplicationInfoRepository;
@@ -207,4 +208,17 @@ public class MyDocumentService {
                 sectionResponses
         );
     }
+
+    public boolean hasResultDocuments(Long userId) {
+        Application application = applicationRepository.findByUser_UserId(userId)
+                .orElseThrow(()->new IllegalArgumentException("신청 정보를 찾을 수 없습니다."));
+
+        boolean result=false;
+        if(application.getApplicationStatus()== ApplicationStatus.DONE){
+            result=true;
+        }
+        return result;
+
+    }
+
 }

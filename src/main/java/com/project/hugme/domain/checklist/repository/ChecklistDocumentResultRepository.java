@@ -42,4 +42,5 @@ public interface ChecklistDocumentResultRepository extends JpaRepository<
             @Param("applicationId") Long applicationId,
             @Param("userId") Long userId
     );
+
 }
