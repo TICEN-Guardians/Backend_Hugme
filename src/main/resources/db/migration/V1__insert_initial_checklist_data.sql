@@ -589,7 +589,9 @@ INSERT INTO documents (
     validity_rule,
     submission_form,
     sample_image_url,
-    sort_order
+    sort_order,
+    created_at,
+    updated_at
 )
 SELECT
     item.item_id,
@@ -599,7 +601,9 @@ SELECT
     NULL,
     NULL,
     NULL,
-    seed.sort_order
+    seed.sort_order,
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
 FROM seed
          JOIN checklist_items item
               ON item.item_name = seed.item_name;
