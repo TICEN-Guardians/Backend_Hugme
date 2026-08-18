@@ -44,6 +44,13 @@ public class Document {
     )
     private String description;
 
+
+    @Column(
+            name = "sample_image_url",
+            length = 1000
+    )
+    private String sampleImageUrl;
+
     @Column(
             name = "sort_order",
             nullable = false
