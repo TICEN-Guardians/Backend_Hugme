@@ -9,6 +9,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +23,8 @@ public class EmbeddingBackfillRunner {
 
     private final EmbeddingModel embeddingModel;
 
+    private static final int BATCH_SIZE = 50;
+
     @EventListener(ApplicationReadyEvent.class)
     public void backfillMissingEmbeddings() {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
@@ -33,20 +36,31 @@ public class EmbeddingBackfillRunner {
             return;
         }
 
-        log.info("임베딩 백필 대상 {}건, 계산 시작", rows.size());
+        log.info("임베딩 대상 {}건, 배치 크기 {}로 계산 시작", rows.size(), BATCH_SIZE);
 
-        for (Map<String, Object> row : rows) {
-            String id = String.valueOf(row.get("id"));
-            String content = (String) row.get("content");
-            float[] embedding = embeddingModel.embed(content);
+        for (int i = 0; i < rows.size(); i += BATCH_SIZE) {
+            List<Map<String, Object>> batch = rows.subList(i, Math.min(i + BATCH_SIZE, rows.size()));
 
-            jdbcTemplate.update(
-                    "UPDATE vector_store SET embedding = ?::vector WHERE id = ?::uuid",
-                    vectorToString(embedding), id
-            );
+            List<String> ids = new ArrayList<>();
+            List<String> contents = new ArrayList<>();
+            for (Map<String, Object> row : batch) {
+                ids.add(String.valueOf(row.get("id")));
+                contents.add((String) row.get("content"));
+            }
+
+            List<float[]> embeddings = embeddingModel.embed(contents);
+
+            for (int j = 0; j < ids.size(); j++) {
+                jdbcTemplate.update(
+                        "UPDATE vector_store SET embedding = ?::vector WHERE id = ?::uuid",
+                        vectorToString(embeddings.get(j)), ids.get(j)
+                );
+            }
+
+            log.info("배치 처리 완료: {}/{}", Math.min(i + BATCH_SIZE, rows.size()), rows.size());
         }
 
-        log.info("임베딩 백필 완료: {}건", rows.size());
+        log.info("임베딩 완료: {}건", rows.size());
     }
 
     private String vectorToString(float[] embedding) {
