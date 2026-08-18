@@ -74,7 +74,7 @@ public class AuthController {
         ResponseCookie cookie = ResponseCookie
                 .from("refreshToken", tokenPair.refreshToken())
                 .httpOnly(true)
-                .secure(true)    //http 기준- false
+                .secure(false)    //http 기준- false
                 .path("/api/auth")
                 .maxAge(Duration.ofDays(7))
                 .build();
@@ -100,7 +100,7 @@ public class AuthController {
         ResponseCookie cookie = ResponseCookie
                 .from("refreshToken", tokenPair.refreshToken())
                 .httpOnly(true)
-                .secure(true)   // 로컬 HTTP
+                .secure(false)   // 로컬 HTTP
                 .path("/api/auth")
                 .maxAge(Duration.ofDays(7))
                 .build();
@@ -131,7 +131,7 @@ public class AuthController {
         ResponseCookie deleteCookie = ResponseCookie
                 .from("refreshToken", "")
                 .httpOnly(true)
-                .secure(true)       // 로컬 HTTP
+                .secure(false)       // 로컬 HTTP
                 .path("/api/auth")   // 생성할 때와 동일해야 함
                 .maxAge(0)           // 즉시 만료 = 삭제
                 .build();

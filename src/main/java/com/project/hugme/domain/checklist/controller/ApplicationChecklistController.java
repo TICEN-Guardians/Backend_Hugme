@@ -176,29 +176,53 @@ public class ApplicationChecklistController {
         return ResponseEntity.ok(response);
     }
 
-
     @Operation(
-            summary = "8. 현재 준비서류 조회",
-            description = "기본·추가·할인 분류별 최종 준비서류를 조회합니다."
+            summary = "5. 최종 준비서류 유무 확인",
+            description = "최종단계 완료 유무를 확인합니다."
     )
-    @GetMapping("/{applicationId}/documents")
-    public ResponseEntity<MyDocumentListResponse>
-    getCurrentDocuments(
+    @GetMapping("/{applicationId}/check")
+    public ResponseEntity<Boolean>
+    getResultDocumentsCheck(
             @AuthenticationPrincipal(expression = "userId")
             Long userId,
 
             @PathVariable("applicationId")
             Long applicationId
     ) {
-        MyDocumentListResponse response =
+        boolean exists =
                 myDocumentService
-                        .getCurrentDocuments(
+                        .hasResultDocuments(
                                 userId,
                                 applicationId
                         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(exists);
     }
+
+
+
+//    @Operation(
+//            summary = "8. 현재 준비서류 조회",
+//            description = "기본·추가·할인 분류별 최종 준비서류를 조회합니다."
+//    )
+//    @GetMapping("/{applicationId}/documents")
+//    public ResponseEntity<MyDocumentListResponse>
+//    getCurrentDocuments(
+//            @AuthenticationPrincipal(expression = "userId")
+//            Long userId,
+//
+//            @PathVariable("applicationId")
+//            Long applicationId
+//    ) {
+//        MyDocumentListResponse response =
+//                myDocumentService
+//                        .getCurrentDocuments(
+//                                userId,
+//                                applicationId
+//                        );
+//
+//        return ResponseEntity.ok(response);
+//    }
 
 
 }
