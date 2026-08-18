@@ -30,7 +30,7 @@ public class GuideChatService {
     private final UserRepository userRepository;
 
     public ChatResponse handle(Long userId, ChatRequest request) {
-        String sessionId = request.sessionId() != null ? request.sessionId() : UUID.randomUUID().toString();
+        String sessionId = resolveSessionId(userId, request);
 
         var route = intentClassificationService.route(request.message());
 
@@ -103,5 +103,12 @@ public class GuideChatService {
         guideChatHistoryRepository.save(GuideChatHistory.create(
                 user, sessionId, response.category(), question, response.answer(), sourcesJoined
         ));
+    }
+
+    private String resolveSessionId(Long userId, ChatRequest request) {
+        if (userId != null) {
+            return "user-" + userId;  // 로그인 사용자는 항상 고정 세션
+        }
+        return request.sessionId() != null ? request.sessionId() : UUID.randomUUID().toString();  // 비로그인은 기존 방식 유지
     }
 }
