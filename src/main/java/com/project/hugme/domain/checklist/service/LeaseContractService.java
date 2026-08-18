@@ -10,8 +10,6 @@ import com.project.hugme.domain.checklist.entity.product.HousingType;
 import com.project.hugme.domain.checklist.repository.ApplicationInfoRepository;
 import com.project.hugme.domain.checklist.repository.ApplicationRepository;
 import com.project.hugme.domain.checklist.repository.HousingTypeRepository;
-import com.project.hugme.domain.file.dto.FileUploadResponse;
-import com.project.hugme.domain.file.service.ApplicationDocumentUploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
