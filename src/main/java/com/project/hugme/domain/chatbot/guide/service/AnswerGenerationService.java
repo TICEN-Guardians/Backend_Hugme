@@ -5,6 +5,7 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.document.Document;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,9 +19,9 @@ public class AnswerGenerationService {
         this.chatClient = chatClient;
     }
 
-    public String generate(String sessionId, String query, List<Document> contextDocs) {
+    public Flux<String> generateStream(String sessionId, String query, List<Document> contextDocs) {
         if (contextDocs.isEmpty()) {
-            return "죄송합니다, 관련된 정보를 찾지 못했습니다. 다른 방식으로 질문해 주시겠어요?";
+            return Flux.just("죄송합니다, 관련된 정보를 찾지 못했습니다. 다른 방식으로 질문해 주시겠어요?");
         }
 
         String context = contextDocs.stream()
@@ -62,7 +63,7 @@ public class AnswerGenerationService {
         return chatClient.prompt()
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, sessionId))
                 .user(prompt)
-                .call()
+                .stream()
                 .content();
     }
 }
