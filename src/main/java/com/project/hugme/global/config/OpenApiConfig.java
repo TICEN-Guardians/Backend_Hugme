@@ -52,6 +52,7 @@ public class OpenApiConfig {
                              * 인증 API
                              */
                             "/api/auth/signup",
+                            "/api/auth/mail/check",
                             "/api/auth/mail/verify",
                             "/api/auth/login",
                             "/api/auth/token/reissue",
