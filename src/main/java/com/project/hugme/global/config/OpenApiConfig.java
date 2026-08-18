@@ -65,6 +65,7 @@ public class OpenApiConfig {
                             "/api/applications/{applicationId}/info",
                             "/api/applications/{applicationId}/questions",
                             "/api/applications/{applicationId}/answers",
+                            "/api/applications/{applicationId}/result-documents",
                             "/api/applications/{applicationId}/documents"
                     );
             Paths reorderedPaths =
