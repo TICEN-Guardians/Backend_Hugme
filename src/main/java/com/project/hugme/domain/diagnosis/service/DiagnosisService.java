@@ -4,10 +4,13 @@ import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertyResolveReq
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertyResolveResponse;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisRequest;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisResponse;
+import com.project.hugme.domain.diagnosis.dto.internal.FastApiRegistryResponse;
 import com.project.hugme.domain.diagnosis.dto.request.PropertyResolveRequest;
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisCreateRequest;
+import com.project.hugme.domain.diagnosis.dto.request.DiagnosisDetailsRequest;
 import com.project.hugme.domain.diagnosis.dto.response.PropertyResolveResponse;
 import com.project.hugme.domain.diagnosis.dto.response.DiagnosisCreateResponse;
+import com.project.hugme.domain.diagnosis.dto.response.RegistryOcrResponse;
 import com.project.hugme.domain.diagnosis.entity.Diagnosis;
 import com.project.hugme.domain.diagnosis.entity.DiagnosisResult;
 import com.project.hugme.domain.diagnosis.repository.DiagnosisRepository;
@@ -104,6 +107,14 @@ public class DiagnosisService {
     }
 
     @Transactional
+    public void updateDetails(Long userId, Long analysisId, DiagnosisDetailsRequest request) {
+        Diagnosis diagnosis = diagnosisRepository.findByAnalysisIdAndUserUserId(analysisId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("진단 요청을 찾을 수 없습니다."));
+        diagnosis.updateDetails(request.dongName(), request.hoName(), request.deposit(),
+                request.contractDate(), request.contractArea(), request.exclusiveArea(),
+                request.floor(), request.landlordName());
+    }
+    @Transactional
     public FastApiDiagnosisResponse analyzeDiagnosis(
             Long userId,
             Long analysisId
@@ -174,7 +185,7 @@ public class DiagnosisService {
         }
     }
 
-    public void uploadRegistry(
+    public RegistryOcrResponse uploadRegistry(
             Long userId,
             Long analysisId,
             MultipartFile file
@@ -189,7 +200,8 @@ public class DiagnosisService {
                     "등기부등본 PDF 파일이 필요합니다."
             );
         }
-        fastApiDiagnosisClient.uploadRegistry(analysisId, file);
+        FastApiRegistryResponse response = fastApiDiagnosisClient.uploadRegistry(analysisId, file);
+        return response.toResponse();
     }
 
     private void saveResult(
@@ -215,3 +227,4 @@ public class DiagnosisService {
         }
     }
 }
+

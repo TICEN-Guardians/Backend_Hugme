@@ -4,6 +4,7 @@ import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertyResolveReq
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertyResolveResponse;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisRequest;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisResponse;
+import com.project.hugme.domain.diagnosis.dto.internal.FastApiRegistryResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
@@ -85,7 +86,7 @@ public class FastApiDiagnosisClient {
         return response;
     }
 
-    public void uploadRegistry(
+    public FastApiRegistryResponse uploadRegistry(
             Long analysisId,
             MultipartFile file
     ) {
@@ -99,12 +100,16 @@ public class FastApiDiagnosisClient {
                 }
             }).contentType(MediaType.APPLICATION_PDF);
 
-            restClient.post()
+            FastApiRegistryResponse response = restClient.post()
                     .uri("/register/check")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(body.build())
                     .retrieve()
-                    .toBodilessEntity();
+                    .body(FastApiRegistryResponse.class);
+            if (response == null) {
+                throw new IllegalStateException("등기 OCR 응답이 없습니다.");
+            }
+            return response;
         } catch (java.io.IOException exception) {
             throw new IllegalStateException(
                     "등기부등본 파일을 읽을 수 없습니다.",

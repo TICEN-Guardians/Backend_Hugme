@@ -65,10 +65,10 @@ public class Diagnosis {
     @Column(name = "housing_type", length = 30)
     private HousingType housingType;
 
-    @Column(name = "deposit", nullable = false)
+    @Column(name = "deposit")
     private Long deposit;
 
-    @Column(name = "contract_date", nullable = false)
+    @Column(name = "contract_date")
     private LocalDate contractDate;
 
     @Column(name = "contract_area", precision = 12, scale = 2)
@@ -124,6 +124,25 @@ public class Diagnosis {
         return diagnosis;
     }
 
+    public void updateDetails(
+            String dongName,
+            String hoName,
+            Long deposit,
+            LocalDate contractDate,
+            BigDecimal contractArea,
+            BigDecimal exclusiveArea,
+            Integer floor,
+            String landlordName
+    ) {
+        this.dongName = dongName;
+        this.hoName = hoName;
+        this.deposit = deposit;
+        this.contractDate = contractDate;
+        this.contractArea = contractArea;
+        this.exclusiveArea = exclusiveArea;
+        this.floor = floor;
+        this.landlordName = landlordName;
+    }
     public void markAnalyzing() {
         status = DiagnosisStatus.ANALYZING;
     }

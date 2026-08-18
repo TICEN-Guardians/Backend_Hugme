@@ -1,7 +1,9 @@
 package com.project.hugme.domain.diagnosis.controller;
 
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisCreateRequest;
+import com.project.hugme.domain.diagnosis.dto.request.DiagnosisDetailsRequest;
 import com.project.hugme.domain.diagnosis.dto.response.DiagnosisCreateResponse;
+import com.project.hugme.domain.diagnosis.dto.response.RegistryOcrResponse;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisResponse;
 import com.project.hugme.domain.diagnosis.service.DiagnosisService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -56,6 +59,15 @@ public class DiagnosisController {
                 .body(response);
     }
 
+    @PutMapping("/{analysisId}/details")
+    public ResponseEntity<Void> updateDetails(
+            @AuthenticationPrincipal(expression = "userId") Long userId,
+            @PathVariable Long analysisId,
+            @Valid @RequestBody DiagnosisDetailsRequest request
+    ) {
+        diagnosisService.updateDetails(userId, analysisId, request);
+        return ResponseEntity.noContent().build();
+    }
     @PostMapping("/{analysisId}/analyze")
     @Operation(
             summary = "전세 위험도 분석 실행",
@@ -81,7 +93,7 @@ public class DiagnosisController {
             summary = "등기부등본 분석",
             description = "등기부등본 PDF를 OCR 분석하고 진단에 연결합니다."
     )
-    public ResponseEntity<Void> uploadRegistry(
+    public ResponseEntity<RegistryOcrResponse> uploadRegistry(
             @AuthenticationPrincipal(expression = "userId")
             Long userId,
 
@@ -91,8 +103,9 @@ public class DiagnosisController {
             @RequestPart("file")
             MultipartFile file
     ) {
-        diagnosisService.uploadRegistry(userId, analysisId, file);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                diagnosisService.uploadRegistry(userId, analysisId, file)
+        );
     }
 
     @GetMapping("/{analysisId}")
@@ -112,3 +125,4 @@ public class DiagnosisController {
         );
     }
 }
+

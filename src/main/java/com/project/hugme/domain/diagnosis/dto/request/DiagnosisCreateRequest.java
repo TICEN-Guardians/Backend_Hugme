@@ -2,7 +2,6 @@ package com.project.hugme.domain.diagnosis.dto.request;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
@@ -21,11 +20,9 @@ public record DiagnosisCreateRequest(
         @Size(max = 100)
         String hoName,
 
-        @NotNull
         @Positive
         Long deposit,
 
-        @NotNull
         LocalDate contractDate,
 
         @DecimalMin("0.01")
@@ -34,10 +31,10 @@ public record DiagnosisCreateRequest(
         @DecimalMin("0.01")
         BigDecimal exclusiveArea,
 
-        @NotNull
         Integer floor,
 
         @Size(max = 100)
         String landlordName
 ) {
 }
+
