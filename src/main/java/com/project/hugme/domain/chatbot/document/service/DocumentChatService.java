@@ -22,6 +22,7 @@ import com.project.hugme.domain.checklist.repository.ApplicationRepository;
 import com.project.hugme.domain.user.entity.User;
 import com.project.hugme.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,9 +34,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class DocumentChatService {
 
@@ -119,6 +122,9 @@ public class DocumentChatService {
             DocumentSearchRequest request
     ) throws Exception {
 
+        long totalStartNanos = System.nanoTime();
+        try {
+
         List<DocumentSearchResponse> searchResults =
                 documentSearchFacade.search(request);
 
@@ -135,6 +141,7 @@ public class DocumentChatService {
 
         ChatClient chatClient = chatClientBuilder.build();
 
+        long answerLlmStartNanos = System.nanoTime();
         String answer = chatClient
                 .prompt()
                 .system("""
@@ -172,6 +179,8 @@ public class DocumentChatService {
                 ))
                 .call()
                 .content();
+        log.info("[PERF][document-rag] stage=answer_llm duration_ms={}",
+                elapsedMillis(answerLlmStartNanos));
 
         List<DocumentSourceResponse> sources = extractSources(searchResults);
 
@@ -181,6 +190,10 @@ public class DocumentChatService {
         );
         saveChatHistory(userId, request, response);
         return response;
+        } finally {
+            log.info("[PERF][document-rag] stage=total duration_ms={}",
+                    elapsedMillis(totalStartNanos));
+        }
     }
 
     private void saveChatHistory(
@@ -308,5 +321,9 @@ public class DocumentChatService {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    private long elapsedMillis(long startNanos) {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
     }
 }

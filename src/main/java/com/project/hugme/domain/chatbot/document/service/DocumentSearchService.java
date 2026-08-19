@@ -9,13 +9,16 @@ import com.project.hugme.infra.ai.intent.DocumentBm25FieldMapper;
 import com.project.hugme.infra.ai.intent.DocumentIntentFieldMapper;
 import com.project.hugme.infra.ai.intent.DocumentQuestionIntent;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class DocumentSearchService {
 
@@ -72,6 +75,7 @@ public class DocumentSearchService {
             return List.of();
         }
 
+        long bm25StartNanos = System.nanoTime();
         var response = elasticsearchClient.search(
                 s -> s
                         .index(indexName)
@@ -84,6 +88,8 @@ public class DocumentSearchService {
                         ),
                 DocumentIndexDocument.class
         );
+        log.info("[PERF][document-rag] stage=bm25 duration_ms={}",
+                elapsedMillis(bm25StartNanos));
 
         List<String> responseFields =
                 DocumentIntentFieldMapper.getResponseFields(intents);
@@ -116,14 +122,18 @@ public class DocumentSearchService {
             int topk
     ) throws Exception {
 
+        long embeddingStartNanos = System.nanoTime();
         float[] queryEmbedding =
                 embeddingService.embed(query);
+        log.info("[PERF][document-rag] stage=embedding duration_ms={}",
+                elapsedMillis(embeddingStartNanos));
 
         List<Float> queryVector =
                 toFloatList(queryEmbedding);
 
         int numCandidates = 20;
 
+        long vectorStartNanos = System.nanoTime();
         var response = elasticsearchClient.search(
                 s -> s
                         .index(indexName)
@@ -136,6 +146,8 @@ public class DocumentSearchService {
                         ),
                 DocumentIndexDocument.class
         );
+        log.info("[PERF][document-rag] stage=vector duration_ms={}",
+                elapsedMillis(vectorStartNanos));
 
         List<String> responseFields =
                 DocumentIntentFieldMapper.getResponseFields(intents);
@@ -203,6 +215,8 @@ public class DocumentSearchService {
             int topK
     ) {
 
+        long rrfStartNanos = System.nanoTime();
+
         final int RRF_K = 60;
 
         Map<Long, Double> rrfScores = new HashMap<>();
@@ -251,7 +265,7 @@ public class DocumentSearchService {
             );
         }
 
-        return rrfScores.entrySet()
+        List<DocumentSearchResponse> mergedResults = rrfScores.entrySet()
                 .stream()
                 .sorted(
                         Map.Entry.<Long, Double>comparingByValue()
@@ -273,6 +287,9 @@ public class DocumentSearchService {
                     );
                 })
                 .toList();
+        log.info("[PERF][document-rag] stage=rrf duration_ms={}",
+                elapsedMillis(rrfStartNanos));
+        return mergedResults;
     }
 
         private Map<String, Object> extractFields(
@@ -307,5 +324,9 @@ public class DocumentSearchService {
         }
 
         return fields;
+    }
+
+    private long elapsedMillis(long startNanos) {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
     }
 }
