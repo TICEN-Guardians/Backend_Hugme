@@ -17,6 +17,8 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class DocumentSearchFacade {
 
+    private static final int DOCUMENT_LIST_LIMIT = 100;
+
     private final DocumentStructuredQueryParser structuredQueryParser;
     private final DocumentSearchService documentSearchService;
 
@@ -47,6 +49,15 @@ public class DocumentSearchFacade {
 
                 return List.of(response);
             }
+
+            if (isOnlineIssuanceListQuery(structuredQuery)) {
+                return documentSearchService.searchByOnlineAvailability(
+                        "AVAILABLE",
+                        intents,
+                        DOCUMENT_LIST_LIMIT
+                );
+            }
+
             return documentSearchService.searchByHybrid(
                     structuredQuery.normalizedQuestion(),
                     intents,
@@ -60,5 +71,11 @@ public class DocumentSearchFacade {
 
     private long elapsedMillis(long startNanos) {
         return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+    }
+
+    private boolean isOnlineIssuanceListQuery(DocumentStructuredQuery structuredQuery) {
+        return structuredQuery.documentName() == null
+                && structuredQuery.intents().contains(DocumentQuestionIntent.DOCUMENT_SEARCH)
+                && structuredQuery.intents().contains(DocumentQuestionIntent.ONLINE_ISSUANCE);
     }
 }

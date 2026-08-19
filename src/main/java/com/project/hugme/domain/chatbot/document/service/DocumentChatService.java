@@ -42,6 +42,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DocumentChatService {
 
+    private static final int MAX_DOCUMENTS_IN_ANSWER = 5;
+
     private final DocumentSearchFacade documentSearchFacade;
     private final ChatClient.Builder chatClientBuilder;
     private final ChecklistDocumentResultRepository checklistDocumentResultRepository;
@@ -137,7 +139,11 @@ public class DocumentChatService {
             return response;
         }
 
-        String context = buildContext(searchResults);
+        List<DocumentSearchResponse> answerResults = searchResults.stream()
+                .limit(MAX_DOCUMENTS_IN_ANSWER)
+                .toList();
+
+        String context = buildContext(answerResults, searchResults.size());
 
         ChatClient chatClient = chatClientBuilder.build();
 
@@ -145,6 +151,10 @@ public class DocumentChatService {
         String answer = chatClient
                 .prompt()
                 .system("""
+                        여러 서류 정보가 제공되면, 제공된 모든 서류명을 빠뜨리지 말고 목록으로 안내하세요.
+                        검색 결과에 없는 서류는 추가하지 마세요.
+                        검색 결과가 일부만 제공된 경우에는 전체 건수와 "대표 서류"임을 함께 안내하세요.
+
                         답변 본문에는 URL, Markdown 링크, "여기" 또는 "이곳" 같은 링크 안내 문구를 넣지 마세요.
                         출처 URL은 별도의 sources 데이터로 전달되므로, 본문에서는 출처를 언급할 필요가 없습니다.
 
@@ -182,7 +192,7 @@ public class DocumentChatService {
         log.info("[PERF][document-rag] stage=answer_llm duration_ms={}",
                 elapsedMillis(answerLlmStartNanos));
 
-        List<DocumentSourceResponse> sources = extractSources(searchResults);
+        List<DocumentSourceResponse> sources = extractSources(answerResults);
 
         DocumentChatResponse response = new DocumentChatResponse(
                 answer,
@@ -216,10 +226,19 @@ public class DocumentChatService {
     }
 
     private String buildContext(
-            List<DocumentSearchResponse> searchResults
+            List<DocumentSearchResponse> searchResults,
+            int totalResultCount
     ) {
 
         StringBuilder context = new StringBuilder();
+
+        if (totalResultCount > searchResults.size()) {
+            context.append("검색 결과는 총 ")
+                    .append(totalResultCount)
+                    .append("건이며, 답변에는 대표 ")
+                    .append(searchResults.size())
+                    .append("건만 제공합니다.\n\n");
+        }
 
         for (DocumentSearchResponse result : searchResults) {
 

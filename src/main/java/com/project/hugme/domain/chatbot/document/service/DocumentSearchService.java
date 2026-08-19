@@ -175,6 +175,35 @@ public class DocumentSearchService {
                 .toList();
     }
 
+    public List<DocumentSearchResponse> searchByOnlineAvailability(
+            String availability,
+            List<DocumentQuestionIntent> intents,
+            int limit
+    ) throws Exception {
+        var response = elasticsearchClient.search(
+                s -> s
+                        .index(indexName)
+                        .size(limit)
+                        .query(q -> q
+                                .term(t -> t
+                                        .field("online_availability")
+                                        .value(availability)
+                                )
+                        ),
+                DocumentIndexDocument.class
+        );
+
+        List<String> responseFields =
+                DocumentIntentFieldMapper.getResponseFields(intents);
+
+        return response.hits()
+                .hits()
+                .stream()
+                .filter(hit -> hit.source() != null)
+                .map(hit -> toSearchResponse(hit.source(), responseFields, hit.score()))
+                .toList();
+    }
+
     private List<Float> toFloatList(float[] vector) {
 
         List<Float> result =
@@ -185,6 +214,23 @@ public class DocumentSearchService {
         }
 
         return result;
+    }
+
+    private DocumentSearchResponse toSearchResponse(
+            DocumentIndexDocument document,
+            List<String> responseFields,
+            Double score
+    ) {
+        Map<String, Object> fields = extractFields(document, responseFields);
+
+        return new DocumentSearchResponse(
+                document.documentId(),
+                document.documentName(),
+                fields,
+                document.officialGuideUrl(),
+                document.hugReferenceUrls(),
+                score
+        );
     }
 
     public List<DocumentSearchResponse> searchByHybrid(
