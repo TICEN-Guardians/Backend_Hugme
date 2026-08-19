@@ -49,7 +49,7 @@ public class GuideChatService {
                 return streamFinalAnswer(response);
             }
             FeatureType feature = route.featureType();
-            String answer = feature.description() + "이에요. " + feature.label() + "으로 이동하시겠어요?";
+            String answer = "해당 요청은 " + feature.label() + " 기능이에요. " + feature.label() + "으로 이동하시겠어요?";
             RedirectDto redirect = new RedirectDto(feature.name(), feature.label(), feature.path());
             ChatResponse response = new ChatResponse(
                     sessionId, answer, route.category(), List.of(), List.of(), redirect
