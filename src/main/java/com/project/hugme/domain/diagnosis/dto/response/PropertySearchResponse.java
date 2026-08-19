@@ -6,13 +6,21 @@ import java.util.List;
 public record PropertySearchResponse(
         String normalizedAddress,
         String buildingName,
-        List<PropertyCandidateResponse> candidates
+        List<PropertyCandidateResponse> candidates,
+        List<AddressCandidateResponse> addressCandidates
 ) {
 
     public record PropertyCandidateResponse(
             String buildingName,
             String dongName,
             HousingType housingType
+    ) {
+    }
+
+    public record AddressCandidateResponse(
+            String roadAddress,
+            String jibunAddress,
+            String buildingName
     ) {
     }
 }
