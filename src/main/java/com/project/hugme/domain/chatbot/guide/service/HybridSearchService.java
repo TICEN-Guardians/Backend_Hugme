@@ -27,7 +27,7 @@ public class HybridSearchService {
         List<Document> vectorResults = vectorStore.similaritySearch(
                 SearchRequest.builder()
                         .query(query)
-                        .topK(8)
+                        .topK(12)
                         .filterExpression("category == '" + category + "'")
                         .build()
         );
@@ -54,7 +54,7 @@ public class HybridSearchService {
 
         return rrfScores.entrySet().stream()
                 .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
-                .limit(5)
+                .limit(8)
                 .map(e -> idToDoc.get(e.getKey()))
                 .toList();
     }
@@ -64,7 +64,7 @@ public class HybridSearchService {
                 "SELECT id, content, metadata->>'source' AS source FROM vector_store " +
                         "WHERE content::pdb.ngram(2,3) @@@ ? " +
                         "AND metadata->>'category' = ? " +
-                        "ORDER BY paradedb.score(id) DESC LIMIT 8",
+                        "ORDER BY paradedb.score(id) DESC LIMIT 12",
                 (rs, rowNum) -> Map.of(
                         "id", rs.getString("id"),
                         "content", rs.getString("content"),
