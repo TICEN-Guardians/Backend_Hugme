@@ -28,10 +28,12 @@ pipeline {
                     ).trim()
 
                     env.IMAGE_URI = "${env.ECR_REGISTRY}/${env.IMAGE_NAME}:${env.GIT_SHA}"
+                    env.LATEST_IMAGE_URI = "${env.ECR_REGISTRY}/${env.IMAGE_NAME}:latest"
                 }
 
                 sh 'echo "GIT_SHA=$GIT_SHA"'
                 sh 'echo "IMAGE_URI=$IMAGE_URI"'
+                sh 'echo "LATEST_IMAGE_URI=$LATEST_IMAGE_URI"'
             }
         }
 
@@ -48,15 +50,51 @@ pipeline {
                 sh 'docker image inspect "$IMAGE_URI" --format "{{.Id}}"'
             }
         }
+
+        stage('ECR Login') {
+            steps {
+                sh '''
+                    aws ecr get-login-password --region "$AWS_REGION" \
+                    | docker login \
+                    --username AWS \
+                    --password-stdin "$ECR_REGISTRY"
+                '''
+            }
+        }
+
+        stage('ECR Push') {
+            steps {
+                sh 'docker tag "$IMAGE_URI" "$LATEST_IMAGE_URI"'
+                sh 'docker push "$IMAGE_URI"'
+                sh 'docker push "$LATEST_IMAGE_URI"'
+            }
+        }
+
+        stage('ECR Verify') {
+            steps {
+                sh '''
+                    aws ecr describe-images \
+                    --repository-name "$IMAGE_NAME" \
+                    --image-ids imageTag="$GIT_SHA" \
+                    --region "$AWS_REGION"
+                '''
+                sh '''
+                    aws ecr describe-images \
+                    --repository-name "$IMAGE_NAME" \
+                    --image-ids imageTag=latest \
+                    --region "$AWS_REGION"
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo 'Backend Test / Docker Build 성공'
+            echo 'Backend Test / Docker Build / ECR Push 성공'
         }
 
         failure {
-            echo 'Backend Test / Docker Build 실패'
+            echo 'Backend Test / Docker Build / ECR Push 실패'
         }
     }
 }
