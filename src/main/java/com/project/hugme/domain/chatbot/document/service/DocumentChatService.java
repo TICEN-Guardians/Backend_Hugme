@@ -26,6 +26,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -137,6 +138,9 @@ public class DocumentChatService {
         String answer = chatClient
                 .prompt()
                 .system("""
+                        답변 본문에는 URL, Markdown 링크, "여기" 또는 "이곳" 같은 링크 안내 문구를 넣지 마세요.
+                        출처 URL은 별도의 sources 데이터로 전달되므로, 본문에서는 출처를 언급할 필요가 없습니다.
+
                         당신은 HUG 전세보증 관련 서류 안내 챗봇입니다.
 
                         반드시 아래 규칙을 지켜 답변하세요.
@@ -257,7 +261,10 @@ public class DocumentChatService {
             if (result.officialGuideUrl() != null
                     && !result.officialGuideUrl().isBlank()) {
 
-                titlesByUrl.putIfAbsent(result.officialGuideUrl(), "공식 안내");
+                titlesByUrl.putIfAbsent(
+                        result.officialGuideUrl(),
+                        getOfficialSourceTitle(result.officialGuideUrl())
+                );
             }
 
             if (result.hugReferenceUrls() != null) {
@@ -265,7 +272,7 @@ public class DocumentChatService {
                 for (String url : result.hugReferenceUrls()) {
 
                     if (url != null && !url.isBlank()) {
-                        titlesByUrl.putIfAbsent(url, "HUG 안내");
+                        titlesByUrl.putIfAbsent(url, getHugSourceTitle(url));
                     }
                 }
             }
@@ -274,5 +281,32 @@ public class DocumentChatService {
         return titlesByUrl.entrySet().stream()
                 .map(entry -> new DocumentSourceResponse(entry.getValue(), entry.getKey()))
                 .toList();
+    }
+
+    private String getOfficialSourceTitle(String url) {
+        String host = getHost(url);
+        if ("gov.kr".equals(host) || "www.gov.kr".equals(host)) {
+            return "정부24 발급 안내";
+        }
+        return "공식 안내";
+    }
+
+    private String getHugSourceTitle(String url) {
+        String host = getHost(url);
+        if ("m.khug.or.kr".equals(host)) {
+            return "HUG 보증 안내";
+        }
+        if ("khug.or.kr".equals(host) || "www.khug.or.kr".equals(host)) {
+            return "HUG 서류 안내";
+        }
+        return "HUG 안내";
+    }
+
+    private String getHost(String url) {
+        try {
+            return URI.create(url).getHost();
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }
