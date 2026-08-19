@@ -47,7 +47,10 @@ public record FastApiDiagnosisResponse(
     public record Risk(
             Integer score,
             String grade,
-            Breakdown breakdown
+            Breakdown breakdown,
+            Weights weights,
+            Boolean gradeOverridden,
+            Boolean provisionalCollateralBasis
     ) {
     }
 
@@ -56,6 +59,16 @@ public record FastApiDiagnosisResponse(
             Integer rollover,
             Integer property,
             Integer market
+    ) {
+    }
+
+    /** 위험요인별 만점. 클라이언트가 만점을 따로 갖지 않도록 AI가 함께 내려준다. */
+    public record Weights(
+            Integer underwater,
+            Integer rollover,
+            Integer property,
+            Integer market,
+            Integer total
     ) {
     }
 
@@ -96,16 +109,24 @@ public record FastApiDiagnosisResponse(
     public record PriceScenarioPoint(
             String label,
             Integer priceDropRate,
-            Double collateralBurdenRate
+            Long estimatedSalePrice,
+            Double collateralBurdenRate,
+            String verdict
     ) {
     }
 
     public record ReportExplanation(
             String summary,
-            List<String> keyFindings,
+            List<ReportFinding> keyFindings,
             List<String> cautions,
             List<String> recommendedActions,
             String generatedBy
+    ) {
+    }
+
+    public record ReportFinding(
+            String title,
+            String description
     ) {
     }
 }
