@@ -4,6 +4,6 @@ import java.util.List;
 
 public record DocumentChatResponse(
         String answer,
-        List<String> sources
+        List<DocumentSourceResponse> sources
 ) {
 }

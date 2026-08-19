@@ -1,6 +1,7 @@
 package com.project.hugme.domain.chatbot.document.service;
 
 import com.project.hugme.domain.chatbot.document.dto.DocumentChatResponse;
+import com.project.hugme.domain.chatbot.document.dto.DocumentSourceResponse;
 import com.project.hugme.domain.chatbot.document.dto.DocumentSearchRequest;
 import com.project.hugme.domain.chatbot.document.dto.DocumentSearchResponse;
 import com.project.hugme.domain.chatbot.document.dto.DocumentPreparationDocumentResponse;
@@ -27,10 +28,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -167,7 +169,7 @@ public class DocumentChatService {
                 .call()
                 .content();
 
-        List<String> sources = extractSources(searchResults);
+        List<DocumentSourceResponse> sources = extractSources(searchResults);
 
         DocumentChatResponse response = new DocumentChatResponse(
                 answer,
@@ -190,7 +192,9 @@ public class DocumentChatService {
                 request.documentId(),
                 request.question(),
                 response.answer(),
-                String.join("\n", response.sources())
+                response.sources().stream()
+                        .map(DocumentSourceResponse::url)
+                        .collect(Collectors.joining("\n"))
         ));
     }
 
@@ -242,18 +246,18 @@ public class DocumentChatService {
         return context.toString();
     }
 
-    private List<String> extractSources(
+    private List<DocumentSourceResponse> extractSources(
             List<DocumentSearchResponse> searchResults
     ) {
 
-        Set<String> sources = new LinkedHashSet<>();
+        Map<String, String> titlesByUrl = new LinkedHashMap<>();
 
         for (DocumentSearchResponse result : searchResults) {
 
             if (result.officialGuideUrl() != null
                     && !result.officialGuideUrl().isBlank()) {
 
-                sources.add(result.officialGuideUrl());
+                titlesByUrl.putIfAbsent(result.officialGuideUrl(), "공식 안내");
             }
 
             if (result.hugReferenceUrls() != null) {
@@ -261,12 +265,14 @@ public class DocumentChatService {
                 for (String url : result.hugReferenceUrls()) {
 
                     if (url != null && !url.isBlank()) {
-                        sources.add(url);
+                        titlesByUrl.putIfAbsent(url, "HUG 안내");
                     }
                 }
             }
         }
 
-        return List.copyOf(sources);
+        return titlesByUrl.entrySet().stream()
+                .map(entry -> new DocumentSourceResponse(entry.getValue(), entry.getKey()))
+                .toList();
     }
 }
