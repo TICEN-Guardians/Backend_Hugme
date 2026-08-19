@@ -10,6 +10,9 @@ import com.project.hugme.domain.chatbot.guide.repository.GuideChatHistoryReposit
 import com.project.hugme.domain.user.entity.User;
 import com.project.hugme.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.document.Document;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,7 @@ public class GuideChatService {
     private final MetaAnswerService metaAnswerService;
     private final GuideChatHistoryRepository guideChatHistoryRepository;
     private final UserRepository userRepository;
+    private final ChatMemory chatMemory;
 
     public Flux<ServerSentEvent<Object>> handle(Long userId, ChatRequest request) {
         String sessionId = resolveSessionId(userId, request);
@@ -46,6 +50,7 @@ public class GuideChatService {
                         route.category(), List.of(), List.of(), null
                 );
                 saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
+                rememberTurn(sessionId, request.message(), response.answer());
                 return streamFinalAnswer(response);
             }
             FeatureType feature = route.featureType();
@@ -55,6 +60,7 @@ public class GuideChatService {
                     sessionId, answer, route.category(), List.of(), List.of(), redirect
             );
             saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
+            rememberTurn(sessionId, request.message(), response.answer());
             return streamFinalAnswer(response);
         }
 
@@ -72,6 +78,7 @@ public class GuideChatService {
                     route.category(), List.of(), List.of(), null
             );
             saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
+            rememberTurn(sessionId, request.message(), response.answer());
             return streamFinalAnswer(response);
         }
 
@@ -110,6 +117,12 @@ public class GuideChatService {
                 ServerSentEvent.builder((Object) response.answer()).event("token").build(),
                 ServerSentEvent.builder((Object) response).event("done").build()
         );
+    }
+
+    // feature/off_topic 답변은 chatClient를 거치지 않아 MessageChatMemoryAdvisor가 자동으로 기록해주지 않으므로 직접 기록한다.
+    // meta는 metaAnswerService가 chatClient를 통해 이미 기록하므로 여기서 다시 호출하지 않는다.
+    private void rememberTurn(String sessionId, String question, String answer) {
+        chatMemory.add(sessionId, List.of(new UserMessage(question), new AssistantMessage(answer)));
     }
 
     private void saveHistoryIfLoggedIn(Long userId, String sessionId, String question, ChatResponse response) {
