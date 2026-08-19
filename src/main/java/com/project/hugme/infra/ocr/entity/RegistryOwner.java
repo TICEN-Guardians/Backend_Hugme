@@ -40,8 +40,8 @@ public class RegistryOwner {
     @Column(nullable = false, length = 255)
     private String address;
 
-    /** '1/1', '1/2' 등. */
-    @Column(length = 10)
+    /** '1/1', '1/2' 등. 집합건물 대지권은 분모가 커서 '3567/100000' 형태도 들어온다. */
+    @Column(length = 30)
     private String share;
 
     @Enumerated(EnumType.STRING)

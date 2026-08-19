@@ -43,8 +43,8 @@ public class RegistryRight {
     @Column(name = "right_type", nullable = false, length = 30)
     private RightType rightType;
 
-    /** 부기등기는 '1-1' 형태. */
-    @Column(name = "rank_no", nullable = false, length = 10)
+    /** 부기등기는 '1-1' 형태. '2번의부기1호' 같은 표기도 들어온다. */
+    @Column(name = "rank_no", nullable = false, length = 20)
     private String rankNo;
 
     @Column(name = "receipt_no", length = 30)
@@ -57,7 +57,7 @@ public class RegistryRight {
     @Column(length = 100)
     private String holder;
 
-    @Column(length = 50)
+    @Column(length = 100)
     private String debtor;
 
     /** 채권최고액 / 전세금 / 임차보증금 / 청구금액. */
