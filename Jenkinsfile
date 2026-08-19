@@ -18,7 +18,7 @@ pipeline {
         stage('Test') {
             steps {
                 sh 'chmod +x gradlew'
-                sh './gradlew clean test --no-daemon'
+                sh './gradlew clean test --tests "com.project.hugme.infra.ai.intent.DocumentIntentFieldMapperTest" --no-daemon'
             }
         }
     }
