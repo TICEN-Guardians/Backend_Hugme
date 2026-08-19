@@ -55,7 +55,8 @@ public class SecurityConfig {
                                 "/login/oauth2/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/api/chatbot/guide/**"
+                                "/api/chatbot/guide/**",
+                                "/actuator/health"
                         ).permitAll()
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
