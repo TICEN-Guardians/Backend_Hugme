@@ -36,7 +36,7 @@ public class GuideChatService {
     public Flux<ServerSentEvent<Object>> handle(Long userId, ChatRequest request) {
         String sessionId = resolveSessionId(userId, request);
 
-        var route = intentClassificationService.route(request.message());
+        var route = intentClassificationService.route(request.message(), sessionId);
 
         if ("feature".equals(route.category())) {
             if (route.featureType() == null) {
@@ -75,7 +75,7 @@ public class GuideChatService {
             return streamFinalAnswer(response);
         }
 
-        List<Document> results = hybridSearchService.search(request.message(), route.sources());
+        List<Document> results = hybridSearchService.search(route.rewrittenQuery(), route.category());
 
         List<SourceDto> sources = results.stream()
                 .map(doc -> new SourceDto(
