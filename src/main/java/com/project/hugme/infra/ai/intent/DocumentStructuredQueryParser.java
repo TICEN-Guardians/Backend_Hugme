@@ -128,6 +128,12 @@ public class DocumentStructuredQueryParser {
 
 
                         PRECAUTIONS
+                        - 발급일 기준 N개월 이내, 최근 발급본, 유효기간처럼
+                          서류의 발급 시점 또는 제출 유효기간 조건을 묻는 경우도 포함한다.
+                        - "보증신청일 기준으로 1개월 이내에 발급된 서류가 뭐야?"는
+                          DOCUMENT_SEARCH, PRECAUTIONS로 분류한다.
+                        - "발급일이 최근 1개월 이내여야 하는 서류를 찾아줘"는
+                          DOCUMENT_SEARCH, PRECAUTIONS로 분류한다.
                         - 특정 서류를 발급하거나 준비하거나
                           HUG에 제출할 때 주의해야 할 사항을 묻는 경우
                         - 반드시 '서류'의 발급·준비·제출과 관련된 주의사항이어야 한다.

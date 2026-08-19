@@ -48,7 +48,8 @@ public class DocumentIntentFieldMapper {
             );
 
             case REQUIREMENTS -> List.of(
-                    "required_documents"
+                    "required_documents",
+                    "notes"
             );
 
             case APPLICANT_ELIGIBILITY -> List.of(
@@ -60,7 +61,8 @@ public class DocumentIntentFieldMapper {
             );
 
             case PROCESSING_TIME -> List.of(
-                    "processing_time"
+                    "processing_time",
+                    "notes"
             );
 
             case PRECAUTIONS -> List.of(
