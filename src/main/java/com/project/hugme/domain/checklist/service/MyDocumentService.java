@@ -15,10 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -207,6 +204,44 @@ public class MyDocumentService {
                 applicationInfo.getApplicationId(),
                 sectionResponses
         );
+    }
+    @Transactional(readOnly = true)
+    public boolean hasResultDocuments(
+            Long userId, ProductCode productCode
+    ) {
+        // productCode가 없으면 기존 로직 사용
+        if (productCode == null) {
+            return hasResultDocuments(userId);
+        }
+
+        Optional<Application> existingApplication =
+                applicationRepository.findByUser_UserId(userId);
+
+        if (existingApplication.isEmpty()) {
+            return false;
+        }
+
+        Application application =
+                existingApplication.get();
+
+        boolean completed =
+                application.getApplicationStatus()
+                        == ApplicationStatus.DONE;
+
+        ProductCode existingProductCode =
+                application
+                        .getProduct()
+                        .getProductCode();
+
+        boolean sameProduct =
+                existingProductCode == productCode;
+
+        boolean documentsExist =
+                hasResultDocuments(userId);
+
+        return completed
+                && sameProduct
+                && documentsExist;
     }
 
     public boolean hasResultDocuments(Long userId) {

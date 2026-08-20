@@ -4,12 +4,14 @@ import com.project.hugme.domain.checklist.dto.application.*;
 import com.project.hugme.domain.checklist.dto.question.QuestionAnswersRequest;
 import com.project.hugme.domain.checklist.dto.question.QuestionAnswersResponse;
 import com.project.hugme.domain.checklist.dto.question.QuestionListResponse;
+import com.project.hugme.domain.checklist.entity.product.ProductCode;
 import com.project.hugme.domain.checklist.entity.question.QuestionStep;
 import com.project.hugme.domain.checklist.service.ApplicationChecklistService;
 import com.project.hugme.domain.checklist.service.LeaseContractService;
 import com.project.hugme.domain.checklist.service.MyDocumentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -192,24 +194,30 @@ public class ApplicationChecklistController {
 
     @Operation(
             summary = "9. 최종 준비서류 유무 확인",
-            description = "최종단계 완료 유무를 확인합니다."
+            description = """
+                productCode가 없으면 기존 방식으로 최종 준비서류 유무를 확인합니다.
+                productCode가 있으면 완료된 신청의 상품과 요청 상품이 같은지도 확인합니다.
+                """
     )
     @GetMapping("/check")
     public ResponseEntity<Boolean>
     getResultDocumentsCheck(
             @AuthenticationPrincipal(expression = "userId")
-            Long userId
+            Long userId,
+
+            @RequestParam(
+                    name = "productCode",
+                    required = false
+            )
+            ProductCode productCode
     ) {
         boolean exists =
-                myDocumentService
-                        .hasResultDocuments(
-                                userId
-                        );
+                myDocumentService.hasResultDocuments(
+                        userId, productCode
+                );
 
         return ResponseEntity.ok(exists);
     }
-
-
 
 //    @Operation(
 //            summary = "8. 현재 준비서류 조회",
