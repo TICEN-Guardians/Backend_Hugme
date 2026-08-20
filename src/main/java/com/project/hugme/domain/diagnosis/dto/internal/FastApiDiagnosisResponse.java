@@ -119,13 +119,20 @@ public record FastApiDiagnosisResponse(
             String summary,
             List<ReportFinding> keyFindings,
             List<String> cautions,
-            List<String> recommendedActions,
+            List<ReportAction> recommendedActions,
             String generatedBy
     ) {
     }
 
     public record ReportFinding(
             String title,
+            String description
+    ) {
+    }
+
+    /** label은 목록에 쓰는 명사형 요약, description은 실행 문장. */
+    public record ReportAction(
+            String label,
             String description
     ) {
     }
