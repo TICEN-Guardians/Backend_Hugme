@@ -5,7 +5,9 @@ import com.project.hugme.domain.auth.exception.RefreshTokenReuseException;
 import com.project.hugme.domain.user.exception.WithdrawnUserException;
 import com.project.hugme.domain.user.exception.EmailVerificationRequiredException;
 import com.project.hugme.domain.user.exception.UserNotFoundException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -71,8 +73,21 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleRefreshTokenReuse(
             RefreshTokenReuseException e
     ) {
+
+        ResponseCookie deleteCookie = ResponseCookie
+                .from("refreshToken", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/api/auth")
+                .maxAge(0)
+                .build();
+
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        deleteCookie.toString()
+                )
                 .body(new ErrorResponse(
                         401,
                         "REFRESH_TOKEN_REUSED",
@@ -103,8 +118,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(
             InvalidCredentialsException.class
     )
-    public ResponseEntity<ErrorResponse>
-    handleInvalidCredentials(
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(
             InvalidCredentialsException exception
     ) {
         return ResponseEntity
