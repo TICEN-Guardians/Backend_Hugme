@@ -7,6 +7,7 @@ import com.project.hugme.domain.auth.dto.SignUpResponse;
 import com.project.hugme.domain.auth.dto.TokenPair;
 import com.project.hugme.domain.auth.entity.RefreshToken;
 import com.project.hugme.domain.auth.exception.DuplicateEmailException;
+import com.project.hugme.domain.auth.exception.InvalidCredentialsException;
 import com.project.hugme.domain.auth.exception.RefreshTokenReuseException;
 import com.project.hugme.domain.auth.repository.RefreshTokenRepository;
 import com.project.hugme.domain.auth.security.CustomUserDetails;
@@ -22,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,14 +98,23 @@ public class AuthService {
         if (user.getStatus() == UserStatus.WITHDRAWN) {
             throw new WithdrawnUserException();
         }
+        Authentication authentication;
+        try {
+            authentication =
+                    authenticationManager.authenticate(
+                            new UsernamePasswordAuthenticationToken(
+                                    request.email(),
+                                    request.password()
+                            )
+                    );
+        } catch (AuthenticationException exception) {
+            /*
+             * 비밀번호 불일치 등 로그인 인증 실패
+             */
+            throw new InvalidCredentialsException();
+        }
 
-        Authentication authentication =
-                authenticationManager.authenticate(
-                        new UsernamePasswordAuthenticationToken(
-                                request.email(),
-                                request.password()
-                        )
-                );
+
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
