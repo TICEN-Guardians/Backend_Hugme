@@ -9,4 +9,8 @@ public interface GuideChatHistoryRepository extends JpaRepository<GuideChatHisto
 
     List<GuideChatHistory> findByUser_UserIdOrderByCreatedAtAsc(Long userId);
 
+    List<GuideChatHistory> findByUser_UserIdAndSessionIdOrderByCreatedAtAsc(Long userId, String sessionId);
+
+    void deleteByUser_UserIdAndSessionId(Long userId, String sessionId);
+
 }
