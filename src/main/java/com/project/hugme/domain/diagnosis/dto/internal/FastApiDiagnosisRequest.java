@@ -9,6 +9,7 @@ import com.project.hugme.infra.ocr.enums.CheckStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public record FastApiDiagnosisRequest(
         Long analysisId,
@@ -20,13 +21,21 @@ public record FastApiDiagnosisRequest(
         BigDecimal contractArea,
         BigDecimal exclusiveArea,
         Integer floor,
-        RegistryRisk registryRisk
+        RegistryRisk registryRisk,
+
+        /**
+         * 진단 생성 때 받아 둔 주소·건축물대장 정보.
+         * AI가 이 값을 쓰면 주소·건축물대장 API를 다시 부르지 않는다.
+         * null 이면 AI가 예전처럼 처음부터 다시 조회한다.
+         */
+        Map<String, Object> propertySnapshot
 ) {
     public static FastApiDiagnosisRequest from(
             Diagnosis diagnosis,
             RegistryResult registryResult,
             List<LandlordWatchlistCheck> watchlistChecks,
-            List<RegistryOwner> owners
+            List<RegistryOwner> owners,
+            Map<String, Object> propertySnapshot
     ) {
         RegistryRisk risk = registryResult == null
                 ? null
@@ -47,7 +56,8 @@ public record FastApiDiagnosisRequest(
                 diagnosis.getContractArea(),
                 diagnosis.getExclusiveArea(),
                 diagnosis.getFloor(),
-                risk
+                risk,
+                propertySnapshot
         );
     }
 
