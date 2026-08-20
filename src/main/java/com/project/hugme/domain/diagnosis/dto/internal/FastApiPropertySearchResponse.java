@@ -1,6 +1,7 @@
 package com.project.hugme.domain.diagnosis.dto.internal;
 
 import com.project.hugme.domain.diagnosis.dto.response.PropertySearchResponse;
+import com.project.hugme.domain.diagnosis.dto.response.PropertySearchResponse.AddressCandidateResponse;
 import com.project.hugme.domain.diagnosis.dto.response.PropertySearchResponse.PropertyCandidateResponse;
 import com.project.hugme.domain.diagnosis.enums.HousingType;
 
@@ -9,7 +10,8 @@ import java.util.List;
 public record FastApiPropertySearchResponse(
         String normalizedAddress,
         String buildingName,
-        List<FastApiPropertyCandidateResponse> candidates
+        List<FastApiPropertyCandidateResponse> candidates,
+        List<FastApiAddressCandidateResponse> addressCandidates
 ) {
 
     public PropertySearchResponse toResponse() {
@@ -20,10 +22,18 @@ public record FastApiPropertySearchResponse(
                           .map(FastApiPropertyCandidateResponse::toResponse)
                           .toList();
 
+        List<AddressCandidateResponse> addresses =
+                addressCandidates == null
+                        ? List.of()
+                        : addressCandidates.stream()
+                          .map(FastApiAddressCandidateResponse::toResponse)
+                          .toList();
+
         return new PropertySearchResponse(
                 normalizedAddress,
                 buildingName,
-                responses
+                responses,
+                addresses
         );
     }
 
@@ -38,6 +48,21 @@ public record FastApiPropertySearchResponse(
                     buildingName,
                     dongName,
                     housingType
+            );
+        }
+    }
+
+    public record FastApiAddressCandidateResponse(
+            String roadAddress,
+            String jibunAddress,
+            String buildingName
+    ) {
+
+        private AddressCandidateResponse toResponse() {
+            return new AddressCandidateResponse(
+                    roadAddress,
+                    jibunAddress,
+                    buildingName
             );
         }
     }
