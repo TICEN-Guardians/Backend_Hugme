@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -232,11 +233,30 @@ public class AuthService {
         user.verifyEmail();
     }
 
-    @Transactional
-    public void logout(Long userId) {
 
-        refreshTokenRepository.deleteByUserUserId(userId);
+
+
+    public void logoutByRefreshToken(String refreshToken) {
+        if(refreshToken == null){
+            return;
+        }
+        if(refreshToken.isBlank()){
+            return;
+        }
+        Optional<RefreshToken> optionalRefreshToken=
+                refreshTokenRepository.findByTokenValue(
+                        refreshToken
+        );
+        if(optionalRefreshToken.isEmpty()){
+            return;
+        }
+        // 조회한 Refresh Token 엔티티 꺼내기
+        RefreshToken savedRefreshToken =
+                optionalRefreshToken.get();
+
+        // DB에서 Refresh Token 삭제
+        refreshTokenRepository.delete(
+                savedRefreshToken
+        );
     }
-
-
 }

@@ -140,9 +140,12 @@ public class AuthController {
     )
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
-            @AuthenticationPrincipal(expression = "userId") Long userId
+            @CookieValue(
+                    name = "refreshToken",
+                    required = false
+            ) String refreshToken
     ) {
-        authService.logout(userId);
+        authService.logoutByRefreshToken(refreshToken);
 
         // 브라우저 Refresh Token Cookie 삭제
         ResponseCookie deleteCookie = ResponseCookie
