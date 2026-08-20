@@ -10,7 +10,9 @@ import com.project.hugme.domain.diagnosis.dto.request.DiagnosisCreateRequest;
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisDetailsRequest;
 import com.project.hugme.domain.diagnosis.dto.response.PropertyResolveResponse;
 import com.project.hugme.domain.diagnosis.dto.response.DiagnosisCreateResponse;
+import com.project.hugme.domain.diagnosis.dto.response.DiagnosisReportResponse;
 import com.project.hugme.domain.diagnosis.dto.response.RegistryOcrResponse;
+import com.project.hugme.domain.diagnosis.dto.response.RegistrySummaryResponse;
 import com.project.hugme.domain.diagnosis.entity.Diagnosis;
 import com.project.hugme.domain.diagnosis.entity.DiagnosisResult;
 import com.project.hugme.domain.diagnosis.repository.DiagnosisRepository;
@@ -26,6 +28,7 @@ import com.project.hugme.infra.ocr.entity.RegistryOwner;
 import com.project.hugme.infra.ocr.repository.LandlordWatchlistCheckRepository;
 import com.project.hugme.infra.ocr.repository.RegistryResultRepository;
 import com.project.hugme.infra.ocr.repository.RegistryOwnerRepository;
+import com.project.hugme.infra.ocr.repository.RegistryRightRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +56,7 @@ public class DiagnosisService {
     private final UserRepository userRepository;
     private final RegistryResultRepository registryResultRepository;
     private final RegistryOwnerRepository registryOwnerRepository;
+    private final RegistryRightRepository registryRightRepository;
     private final LandlordWatchlistCheckRepository watchlistCheckRepository;
 
     public PropertySearchResponse searchProperty(
@@ -157,7 +161,7 @@ public class DiagnosisService {
         return response;
     }
 
-    public FastApiDiagnosisResponse getDiagnosisResult(
+    public DiagnosisReportResponse getDiagnosisResult(
             Long userId,
             Long analysisId
     ) {
@@ -172,8 +176,9 @@ public class DiagnosisService {
                         "완료된 진단 결과가 없습니다."
                 ));
 
+        FastApiDiagnosisResponse diagnosis;
         try {
-            return JSON_MAPPER.readValue(
+            diagnosis = JSON_MAPPER.readValue(
                     result.getResponseJson(),
                     FastApiDiagnosisResponse.class
             );
@@ -183,6 +188,24 @@ public class DiagnosisService {
                     exception
             );
         }
+
+        return DiagnosisReportResponse.of(
+                diagnosis,
+                findRegistrySummary(analysisId)
+        );
+    }
+
+    private RegistrySummaryResponse findRegistrySummary(Long analysisId) {
+        return registryResultRepository
+                .findTopByAnalysisIdOrderByParsedAtDesc(analysisId)
+                .map(registryResult -> RegistrySummaryResponse.from(
+                        registryResult,
+                        registryRightRepository
+                                .findByRegistryResultRegistryResultIdOrderByRightIdAsc(
+                                        registryResult.getRegistryResultId()
+                                )
+                ))
+                .orElse(null);
     }
 
     public RegistryOcrResponse uploadRegistry(

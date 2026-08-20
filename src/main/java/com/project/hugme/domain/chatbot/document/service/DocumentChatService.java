@@ -1,6 +1,7 @@
 package com.project.hugme.domain.chatbot.document.service;
 
 import com.project.hugme.domain.chatbot.document.dto.DocumentChatResponse;
+import com.project.hugme.domain.chatbot.document.dto.DocumentSourceResponse;
 import com.project.hugme.domain.chatbot.document.dto.DocumentSearchRequest;
 import com.project.hugme.domain.chatbot.document.dto.DocumentSearchResponse;
 import com.project.hugme.domain.chatbot.document.dto.DocumentPreparationDocumentResponse;
@@ -21,20 +22,27 @@ import com.project.hugme.domain.checklist.repository.ApplicationRepository;
 import com.project.hugme.domain.user.entity.User;
 import com.project.hugme.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class DocumentChatService {
+
+    private static final int MAX_DOCUMENTS_IN_ANSWER = 5;
 
     private final DocumentSearchFacade documentSearchFacade;
     private final ChatClient.Builder chatClientBuilder;
@@ -116,6 +124,9 @@ public class DocumentChatService {
             DocumentSearchRequest request
     ) throws Exception {
 
+        long totalStartNanos = System.nanoTime();
+        try {
+
         List<DocumentSearchResponse> searchResults =
                 documentSearchFacade.search(request);
 
@@ -128,13 +139,25 @@ public class DocumentChatService {
             return response;
         }
 
-        String context = buildContext(searchResults);
+        List<DocumentSearchResponse> answerResults = searchResults.stream()
+                .limit(MAX_DOCUMENTS_IN_ANSWER)
+                .toList();
+
+        String context = buildContext(answerResults, searchResults.size());
 
         ChatClient chatClient = chatClientBuilder.build();
 
+        long answerLlmStartNanos = System.nanoTime();
         String answer = chatClient
                 .prompt()
                 .system("""
+                        여러 서류 정보가 제공되면, 제공된 모든 서류명을 빠뜨리지 말고 목록으로 안내하세요.
+                        검색 결과에 없는 서류는 추가하지 마세요.
+                        검색 결과가 일부만 제공된 경우에는 전체 건수와 "대표 서류"임을 함께 안내하세요.
+
+                        답변 본문에는 URL, Markdown 링크, "여기" 또는 "이곳" 같은 링크 안내 문구를 넣지 마세요.
+                        출처 URL은 별도의 sources 데이터로 전달되므로, 본문에서는 출처를 언급할 필요가 없습니다.
+
                         당신은 HUG 전세보증 관련 서류 안내 챗봇입니다.
 
                         반드시 아래 규칙을 지켜 답변하세요.
@@ -166,8 +189,10 @@ public class DocumentChatService {
                 ))
                 .call()
                 .content();
+        log.info("[PERF][document-rag] stage=answer_llm duration_ms={}",
+                elapsedMillis(answerLlmStartNanos));
 
-        List<String> sources = extractSources(searchResults);
+        List<DocumentSourceResponse> sources = extractSources(answerResults);
 
         DocumentChatResponse response = new DocumentChatResponse(
                 answer,
@@ -175,6 +200,10 @@ public class DocumentChatService {
         );
         saveChatHistory(userId, request, response);
         return response;
+        } finally {
+            log.info("[PERF][document-rag] stage=total duration_ms={}",
+                    elapsedMillis(totalStartNanos));
+        }
     }
 
     private void saveChatHistory(
@@ -190,15 +219,26 @@ public class DocumentChatService {
                 request.documentId(),
                 request.question(),
                 response.answer(),
-                String.join("\n", response.sources())
+                response.sources().stream()
+                        .map(DocumentSourceResponse::url)
+                        .collect(Collectors.joining("\n"))
         ));
     }
 
     private String buildContext(
-            List<DocumentSearchResponse> searchResults
+            List<DocumentSearchResponse> searchResults,
+            int totalResultCount
     ) {
 
         StringBuilder context = new StringBuilder();
+
+        if (totalResultCount > searchResults.size()) {
+            context.append("검색 결과는 총 ")
+                    .append(totalResultCount)
+                    .append("건이며, 답변에는 대표 ")
+                    .append(searchResults.size())
+                    .append("건만 제공합니다.\n\n");
+        }
 
         for (DocumentSearchResponse result : searchResults) {
 
@@ -242,18 +282,21 @@ public class DocumentChatService {
         return context.toString();
     }
 
-    private List<String> extractSources(
+    private List<DocumentSourceResponse> extractSources(
             List<DocumentSearchResponse> searchResults
     ) {
 
-        Set<String> sources = new LinkedHashSet<>();
+        Map<String, String> titlesByUrl = new LinkedHashMap<>();
 
         for (DocumentSearchResponse result : searchResults) {
 
             if (result.officialGuideUrl() != null
                     && !result.officialGuideUrl().isBlank()) {
 
-                sources.add(result.officialGuideUrl());
+                titlesByUrl.putIfAbsent(
+                        result.officialGuideUrl(),
+                        getOfficialSourceTitle(result.officialGuideUrl())
+                );
             }
 
             if (result.hugReferenceUrls() != null) {
@@ -261,12 +304,45 @@ public class DocumentChatService {
                 for (String url : result.hugReferenceUrls()) {
 
                     if (url != null && !url.isBlank()) {
-                        sources.add(url);
+                        titlesByUrl.putIfAbsent(url, getHugSourceTitle(url));
                     }
                 }
             }
         }
 
-        return List.copyOf(sources);
+        return titlesByUrl.entrySet().stream()
+                .map(entry -> new DocumentSourceResponse(entry.getValue(), entry.getKey()))
+                .toList();
+    }
+
+    private String getOfficialSourceTitle(String url) {
+        String host = getHost(url);
+        if ("gov.kr".equals(host) || "www.gov.kr".equals(host)) {
+            return "정부24 발급 안내";
+        }
+        return "공식 안내";
+    }
+
+    private String getHugSourceTitle(String url) {
+        String host = getHost(url);
+        if ("m.khug.or.kr".equals(host)) {
+            return "HUG 보증 안내";
+        }
+        if ("khug.or.kr".equals(host) || "www.khug.or.kr".equals(host)) {
+            return "HUG 서류 안내";
+        }
+        return "HUG 안내";
+    }
+
+    private String getHost(String url) {
+        try {
+            return URI.create(url).getHost();
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private long elapsedMillis(long startNanos) {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
     }
 }

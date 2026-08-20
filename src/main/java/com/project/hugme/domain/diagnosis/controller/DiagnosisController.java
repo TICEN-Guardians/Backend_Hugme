@@ -3,6 +3,7 @@ package com.project.hugme.domain.diagnosis.controller;
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisCreateRequest;
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisDetailsRequest;
 import com.project.hugme.domain.diagnosis.dto.response.DiagnosisCreateResponse;
+import com.project.hugme.domain.diagnosis.dto.response.DiagnosisReportResponse;
 import com.project.hugme.domain.diagnosis.dto.response.RegistryOcrResponse;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisResponse;
 import com.project.hugme.domain.diagnosis.service.DiagnosisService;
@@ -113,7 +114,7 @@ public class DiagnosisController {
             summary = "전세 위험도 분석 결과 조회",
             description = "저장된 최종 진단 결과를 조회합니다."
     )
-    public ResponseEntity<FastApiDiagnosisResponse> getDiagnosisResult(
+    public ResponseEntity<DiagnosisReportResponse> getDiagnosisResult(
             @AuthenticationPrincipal(expression = "userId")
             Long userId,
 

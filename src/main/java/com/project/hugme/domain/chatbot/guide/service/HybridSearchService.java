@@ -9,7 +9,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,24 +19,20 @@ public class HybridSearchService {
     @Qualifier("chatbotJdbcTemplate")
     private final JdbcTemplate jdbcTemplate;
 
-    public List<Document> search(String query, List<String> sources) {
-        if (sources.isEmpty()) {
+    public List<Document> search(String query, String category) {
+        if (category == null || category.isBlank()) {
             return List.of();
         }
-
-        String sourceListForFilter = sources.stream()
-                .map(s -> "'" + s + "'")
-                .collect(Collectors.joining(","));
 
         List<Document> vectorResults = vectorStore.similaritySearch(
                 SearchRequest.builder()
                         .query(query)
-                        .topK(8)
-                        .filterExpression("source in [" + sourceListForFilter + "]")
+                        .topK(12)
+                        .filterExpression("category == '" + category + "'")
                         .build()
         );
 
-        List<Map<String, Object>> bm25Results = bm25SearchBySources(query, sources);
+        List<Map<String, Object>> bm25Results = bm25SearchByCategory(query, category);
 
         Map<String, Double> rrfScores = new HashMap<>();
         Map<String, Document> idToDoc = new HashMap<>();
@@ -59,23 +54,23 @@ public class HybridSearchService {
 
         return rrfScores.entrySet().stream()
                 .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
-                .limit(5)
+                .limit(8)
                 .map(e -> idToDoc.get(e.getKey()))
                 .toList();
     }
 
-    private List<Map<String, Object>> bm25SearchBySources(String query, List<String> sources) {
+    private List<Map<String, Object>> bm25SearchByCategory(String query, String category) {
         return jdbcTemplate.query(
                 "SELECT id, content, metadata->>'source' AS source FROM vector_store " +
                         "WHERE content::pdb.ngram(2,3) @@@ ? " +
-                        "AND metadata->>'source' = ANY(?) " +
-                        "ORDER BY paradedb.score(id) DESC LIMIT 8",
+                        "AND metadata->>'category' = ? " +
+                        "ORDER BY paradedb.score(id) DESC LIMIT 12",
                 (rs, rowNum) -> Map.of(
                         "id", rs.getString("id"),
                         "content", rs.getString("content"),
                         "source", rs.getString("source")
                 ),
-                query, sources.toArray(new String[0])
+                query, category
         );
     }
 }
