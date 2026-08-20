@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,9 +33,15 @@ public class GuideChatController {
             summary = "챗봇 메시지 전송(SSE 스트리밍)",
             description = "사용자 질문을 받아 카테고리 분류, 검색, 답변 생성을 수행하고, 답변을 토큰 단위 스트리밍합니다. "
     )
-    public Flux<ServerSentEvent<Object>> sendMessage(@RequestBody ChatRequest request) {
+    public ResponseEntity<Flux<ServerSentEvent<Object>>> sendMessage(@RequestBody ChatRequest request) {
         Long userId = extractUserId();
-        return guideChatService.handle(userId, request);
+        Flux<ServerSentEvent<Object>> stream = guideChatService.handle(userId, request);
+
+        // Nginx가 proxy_buffering으로 SSE 응답을 다 모았다가 한 번에 흘려보내는 것을 막기 위한 헤더.
+        // nginx.conf 수정 없이 이 응답에 한해서만 버퍼링을 끈다.
+        return ResponseEntity.ok()
+                .header("X-Accel-Buffering", "no")
+                .body(stream);
     }
 
     @Operation(summary = "채팅 이력 조회", description = "로그인한 사용자의 상담 챗봇 대화 이력을 시간순으로 조회합니다.")
