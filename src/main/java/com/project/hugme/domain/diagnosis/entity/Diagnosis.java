@@ -83,6 +83,14 @@ public class Diagnosis {
     @Column(name = "landlord_name", length = 100)
     private String landlordName;
 
+    /**
+     * properties/resolve 로 확보한 주소·건축물대장 정보(JSON 문자열).
+     * 분석 단계에서 그대로 AI에 넘겨 공공 API 재조회를 건너뛰게 한다.
+     * 성능을 위한 부가 정보라 값이 없어도 진단은 정상 동작한다.
+     */
+    @Column(name = "property_snapshot", columnDefinition = "TEXT")
+    private String propertySnapshot;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     private DiagnosisStatus status;
@@ -105,7 +113,8 @@ public class Diagnosis {
             BigDecimal contractArea,
             BigDecimal exclusiveArea,
             Integer floor,
-            String landlordName
+            String landlordName,
+            String propertySnapshot
     ) {
         Diagnosis diagnosis = new Diagnosis();
 
@@ -119,6 +128,7 @@ public class Diagnosis {
         diagnosis.exclusiveArea = exclusiveArea;
         diagnosis.floor = floor;
         diagnosis.landlordName = landlordName;
+        diagnosis.propertySnapshot = propertySnapshot;
         diagnosis.status = DiagnosisStatus.CREATED;
 
         return diagnosis;

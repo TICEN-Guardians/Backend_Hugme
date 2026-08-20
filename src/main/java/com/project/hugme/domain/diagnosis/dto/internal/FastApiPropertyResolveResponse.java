@@ -3,6 +3,7 @@ package com.project.hugme.domain.diagnosis.dto.internal;
 import com.project.hugme.domain.diagnosis.dto.response.PropertyResolveResponse;
 import com.project.hugme.domain.diagnosis.enums.HousingType;
 import java.math.BigDecimal;
+import java.util.Map;
 
 public record FastApiPropertyResolveResponse(
         String normalizedAddress,
@@ -14,7 +15,8 @@ public record FastApiPropertyResolveResponse(
         boolean unitNumberRequired,
         BigDecimal exclusiveArea,
         BigDecimal commonArea,
-        BigDecimal totalArea
+        BigDecimal totalArea,
+        Map<String, Object> propertySnapshot
 ) {
 
     public PropertyResolveResponse toResponse() {
@@ -28,7 +30,8 @@ public record FastApiPropertyResolveResponse(
                 unitNumberRequired,
                 exclusiveArea,
                 commonArea,
-                totalArea
+                totalArea,
+                propertySnapshot
         );
     }
 }

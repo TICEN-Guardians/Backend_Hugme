@@ -14,6 +14,12 @@ public record DiagnosisDetailsRequest(
         @NotNull LocalDate contractDate,
         @DecimalMin("0.01") BigDecimal contractArea,
         @DecimalMin("0.01") BigDecimal exclusiveArea,
-        @NotNull Integer floor,
+
+        /**
+         * 단독·다가구 모델에는 층 Feature가 없어 값이 없어도 분석할 수 있다.
+         * 공동주택에서 층이 비면 AI가 기본값으로 채우고 시세 신뢰도를 낮춘다.
+         */
+        Integer floor,
+
         @Size(max = 100) String landlordName
 ) {}

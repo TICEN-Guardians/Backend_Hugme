@@ -30,6 +30,7 @@ import com.project.hugme.infra.ocr.repository.RegistryResultRepository;
 import com.project.hugme.infra.ocr.repository.RegistryOwnerRepository;
 import com.project.hugme.infra.ocr.repository.RegistryRightRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,9 +40,12 @@ import com.project.hugme.domain.diagnosis.dto.request.PropertySearchRequest;
 import com.project.hugme.domain.diagnosis.dto.response.PropertySearchResponse;
 
 import java.util.List;
+import java.util.Map;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -101,7 +105,8 @@ public class DiagnosisService {
                 request.contractArea(),
                 request.exclusiveArea(),
                 request.floor(),
-                request.landlordName()
+                request.landlordName(),
+                writePropertySnapshot(request.propertySnapshot())
         );
 
         Diagnosis savedDiagnosis =
@@ -150,7 +155,8 @@ public class DiagnosisService {
                         diagnosis,
                         registryResult,
                         checks,
-                        owners
+                        owners,
+                        readPropertySnapshot(diagnosis.getPropertySnapshot())
                 )
         );
         diagnosis.complete(
@@ -225,6 +231,40 @@ public class DiagnosisService {
         }
         FastApiRegistryResponse response = fastApiDiagnosisClient.uploadRegistry(analysisId, file);
         return response.toResponse();
+    }
+
+    /**
+     * 매물 스냅샷은 공공 API 재조회를 줄이기 위한 부가 정보다.
+     * 변환에 실패하면 저장하지 않고, AI가 예전처럼 다시 조회하게 둔다.
+     */
+    private String writePropertySnapshot(Map<String, Object> snapshot) {
+        if (snapshot == null || snapshot.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return JSON_MAPPER.writeValueAsString(snapshot);
+        } catch (JsonProcessingException exception) {
+            log.warn("매물 스냅샷을 저장하지 못했습니다", exception);
+            return null;
+        }
+    }
+
+    private Map<String, Object> readPropertySnapshot(String snapshotJson) {
+        if (snapshotJson == null || snapshotJson.isBlank()) {
+            return null;
+        }
+
+        try {
+            return JSON_MAPPER.readValue(
+                    snapshotJson,
+                    new TypeReference<Map<String, Object>>() {
+                    }
+            );
+        } catch (JsonProcessingException exception) {
+            log.warn("저장된 매물 스냅샷을 읽지 못했습니다", exception);
+            return null;
+        }
     }
 
     private void saveResult(
