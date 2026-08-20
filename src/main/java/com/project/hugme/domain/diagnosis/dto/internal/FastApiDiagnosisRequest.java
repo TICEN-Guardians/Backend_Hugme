@@ -63,6 +63,8 @@ public record FastApiDiagnosisRequest(
             String hasActiveJeonseRight,
             String hasActiveLeaseholdRegistration,
             String ownerMatchesContractParty,
+            String contractPartyName,
+            List<String> ownerNames,
             String watchlistCheckStatus,
             Boolean badLandlordMatched
     ) {
@@ -86,9 +88,20 @@ public record FastApiDiagnosisRequest(
                     result.getHasActiveJeonseRight().name(),
                     result.getHasActiveLeaseholdRegistration().name(),
                     ownerMatch(landlordName, owners),
+                    landlordName,
+                    ownerNames(owners),
                     watchlist.status(),
                     watchlist.matched()
             );
+        }
+
+        private static List<String> ownerNames(List<RegistryOwner> owners) {
+            return owners.stream()
+                    .map(RegistryOwner::getName)
+                    .filter(name -> name != null && !name.isBlank())
+                    .map(String::trim)
+                    .distinct()
+                    .toList();
         }
 
         private static String ownerMatch(
