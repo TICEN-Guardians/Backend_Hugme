@@ -3,6 +3,7 @@ package com.project.hugme.domain.chatbot.guide.service;
 import com.project.hugme.domain.chatbot.FeatureType;
 import com.project.hugme.domain.chatbot.guide.dto.ChatRequest;
 import com.project.hugme.domain.chatbot.guide.dto.ChatResponse;
+import com.project.hugme.domain.chatbot.guide.dto.EntryQuestion;
 import com.project.hugme.domain.chatbot.guide.dto.RedirectDto;
 import com.project.hugme.domain.chatbot.guide.dto.SourceDto;
 import com.project.hugme.domain.chatbot.guide.entity.GuideChatHistory;
@@ -36,9 +37,11 @@ public class GuideChatService {
     private final GuideChatHistoryRepository guideChatHistoryRepository;
     private final UserRepository userRepository;
     private final ChatMemory chatMemory;
+    private final GuideSessionService guideSessionService;
 
     public Flux<ServerSentEvent<Object>> handle(Long userId, ChatRequest request) {
-        String sessionId = resolveSessionId(userId, request);
+        String sessionId = resolveSessionId(request);
+        guideSessionService.rehydrateMemoryIfNeeded(userId, sessionId);
 
         var route = intentClassificationService.route(request.message(), sessionId);
 
@@ -58,6 +61,26 @@ public class GuideChatService {
             RedirectDto redirect = new RedirectDto(feature.name(), feature.label(), feature.path());
             ChatResponse response = new ChatResponse(
                     sessionId, answer, route.category(), List.of(), List.of(), redirect
+            );
+            saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
+            rememberTurn(sessionId, request.message(), response.answer());
+            return streamFinalAnswer(response);
+        }
+
+        if ("suggestion_request".equals(route.category())) {
+            List<String> suggestions = suggestedQuestionService.suggestFromHistory(chatMemory.get(sessionId));
+            boolean hasContext = !suggestions.isEmpty();
+            List<String> finalSuggestions = hasContext
+                    ? suggestions
+                    : EntryQuestion.defaults().stream()
+                            .flatMap(entry -> entry.questions().stream())
+                            .limit(4)
+                            .toList();
+            String answer = hasContext
+                    ? "이런 질문은 어떠세요?"
+                    : "아직 나눈 대화가 없어서, 자주 묻는 질문을 추천해드릴게요.";
+            ChatResponse response = new ChatResponse(
+                    sessionId, answer, route.category(), List.of(), finalSuggestions, null
             );
             saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
             rememberTurn(sessionId, request.message(), response.answer());
@@ -100,7 +123,7 @@ public class GuideChatService {
 
         Mono<ServerSentEvent<Object>> doneEvent = Mono.fromCallable(() -> {
                     String answer = answerBuilder.toString();
-                    List<String> suggestedQuestions = suggestedQuestionService.suggest(request.message(), answer);
+                    List<String> suggestedQuestions = suggestedQuestionService.suggest(request.message(), answer, results);
                     ChatResponse response = new ChatResponse(
                             sessionId, answer, route.category(), sources, suggestedQuestions, null
                     );
@@ -140,12 +163,10 @@ public class GuideChatService {
         guideChatHistoryRepository.save(GuideChatHistory.create(
                 user, sessionId, response.category(), question, response.answer(), sourcesJoined
         ));
+        guideSessionService.pruneOldSessions(userId);
     }
 
-    private String resolveSessionId(Long userId, ChatRequest request) {
-        if (userId != null) {
-            return "user-" + userId;  // 로그인 사용자는 항상 고정 세션
-        }
-        return request.sessionId() != null ? request.sessionId() : UUID.randomUUID().toString();  // 비로그인은 기존 방식 유지
+    private String resolveSessionId(ChatRequest request) {
+        return request.sessionId() != null ? request.sessionId() : UUID.randomUUID().toString();
     }
 }
