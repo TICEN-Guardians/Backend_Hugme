@@ -2,6 +2,7 @@ package com.project.hugme.global.exception;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import com.project.hugme.domain.auth.exception.InvalidCredentialsException;
 import com.project.hugme.domain.auth.exception.RefreshTokenReuseException;
 import com.project.hugme.domain.user.exception.WithdrawnUserException;
 import com.project.hugme.domain.user.exception.EmailVerificationRequiredException;
@@ -207,5 +208,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(errorResponse);
+    }
+
+    @ExceptionHandler(
+            InvalidCredentialsException.class
+    )
+    public ResponseEntity<ErrorResponse>
+    handleInvalidCredentials(
+            InvalidCredentialsException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(
+                        HttpStatus.UNAUTHORIZED.value(),
+                        "INVALID_CREDENTIALS",
+                        exception.getMessage()
+                ));
     }
 }

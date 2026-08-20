@@ -18,7 +18,7 @@ public class ChatClientConfig {
     @Bean
     public ChatMemory chatMemory() {
         return MessageWindowChatMemory.builder()
-                .maxMessages(10)  // 최근 10개 메시지만 유지 (윈도우 방식)
+                .maxMessages(20)  // 최근 20개 메시지만 유지 (윈도우 방식)
                 .build();
     }
 
