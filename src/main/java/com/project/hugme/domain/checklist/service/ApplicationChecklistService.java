@@ -9,10 +9,7 @@ import com.project.hugme.domain.checklist.dto.question.QuestionAnswersRequest;
 import com.project.hugme.domain.checklist.dto.question.QuestionAnswersResponse;
 import com.project.hugme.domain.checklist.dto.question.QuestionListResponse;
 import com.project.hugme.domain.checklist.dto.question.QuestionResponse;
-import com.project.hugme.domain.checklist.entity.application.Application;
-import com.project.hugme.domain.checklist.entity.application.ApplicationInfo;
-import com.project.hugme.domain.checklist.entity.application.ContractType;
-import com.project.hugme.domain.checklist.entity.application.PartyType;
+import com.project.hugme.domain.checklist.entity.application.*;
 import com.project.hugme.domain.checklist.entity.product.HousingType;
 import com.project.hugme.domain.checklist.entity.product.HousingTypeCode;
 import com.project.hugme.domain.checklist.entity.product.Product;
@@ -518,7 +515,14 @@ public class ApplicationChecklistService {
                 selectedOptions
         );
 
-        applicationInfo.getApplication().complete();
+        Application application =
+                applicationInfo.getApplication();
+
+        if (application.getApplicationStatus()
+                == ApplicationStatus.PROGRESS) {
+
+            application.complete();
+        }
 
         return new QuestionAnswersResponse(
                 request.currentStep(),

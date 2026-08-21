@@ -26,8 +26,8 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @RequestMapping("/api/applications")
 @Tag(
-        name = "사용자 맞춤 체크리스트 API",
-        description = "OCR과 질문 답변을 통한 사용자 맞춤 체크리스트 API"
+        name = "일반 사용자 맞춤 체크리스트 API",
+        description = "OCR과 질문 답변을 통한 로그인 사용자 맞춤 체크리스트 API"
 )
 public class ApplicationChecklistController {
 
@@ -180,28 +180,28 @@ public class ApplicationChecklistController {
 
     }
 
-//    @Operation(
-//            summary = "8. 최종 준비서류 조회",
-//            description = "기본·추가·할인 분류별 최종 준비서류를 조회합니다."
-//    )
-//    @GetMapping("/{applicationId}/result-documents")
-//    public ResponseEntity<ResultDocumentListResponse>
-//    getResultDocuments(
-//            @AuthenticationPrincipal(expression = "userId")
-//            Long userId,
-//
-//            @PathVariable("applicationId")
-//            Long applicationId
-//    ) {
-//        ResultDocumentListResponse response =
-//                myDocumentService
-//                        .getResultDocuments(
-//                                userId,
-//                                applicationId
-//                        );
-//
-//        return ResponseEntity.ok(response);
-//    }
+    @Operation(
+            summary = "8. 최종 준비서류 조회",
+            description = "기본·추가·할인 분류별 최종 준비서류를 조회합니다."
+    )
+    @GetMapping("/{applicationId}/result-documents")
+    public ResponseEntity<ResultDocumentListResponse>
+    getResultDocuments(
+            @AuthenticationPrincipal(expression = "userId")
+            Long userId,
+
+            @PathVariable("applicationId")
+            Long applicationId
+    ) {
+        ResultDocumentListResponse response =
+                myDocumentService
+                        .getResultDocuments(
+                                userId,
+                                applicationId
+                        );
+
+        return ResponseEntity.ok(response);
+    }
 
     @Operation(
             summary = "9. 최종 준비서류 유무 확인",
@@ -227,29 +227,6 @@ public class ApplicationChecklistController {
 
         return ResponseEntity.ok(exists);
     }
-
-    @SecurityRequirements
-    @Operation(
-            summary = "3. 모의테스트 체크리스트 진입",
-            description = "새로운 신청을 생성합니다. - Status 는 READY로 진행"
-    )
-    @PostMapping("/prepare")
-    public ResponseEntity<ApplicationCreateResponse> prepareApplication(
-            @Valid @RequestBody ApplicationCreateRequest request
-    ) {
-        ApplicationCreateResponse response =
-                applicationChecklistService
-                        .prepareApplication(
-                                0L,
-                                request
-                        );
-
-
-        return ResponseEntity.ok(response);
-
-    }
-
-
 
 
 //    @Operation(

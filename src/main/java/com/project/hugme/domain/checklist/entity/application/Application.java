@@ -54,6 +54,7 @@ public class Application {
     )
     private Instant createdAt;
 
+
     @OneToOne(
             mappedBy = "application",
             cascade = CascadeType.REMOVE,
