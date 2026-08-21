@@ -31,10 +31,7 @@ public class FileController {
             description = "PDF, JPEG 또는 PNG 파일을 비공개 S3에 저장하고 지원 대상 서류의 종류를 자동 검증합니다."
     )
     @PostMapping(
-            value = {
-                    "/applications/{applicationId}/documents/{documentId}",
-                    "/applications/{applicationId}/documents/{documentId}/uploads"
-            },
+            value = "/applications/{applicationId}/documents/{documentId}/uploads",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     public ResponseEntity<FileUploadResponse> uploadFile(
