@@ -62,6 +62,22 @@ public class ApplicationDocumentUpload {
     )
     private Long fileSize;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "validation_status", nullable = false, length = 30)
+    private DocumentValidationStatus validationStatus;
+
+    @Column(name = "detected_document_type", length = 100)
+    private String detectedDocumentType;
+
+    @Column(name = "validation_confidence")
+    private Double validationConfidence;
+
+    @Column(name = "validation_message", length = 1000)
+    private String validationMessage;
+
+    @Column(name = "validated_at")
+    private Instant validatedAt;
+
     @CreationTimestamp
     @Column(
             name = "created_at",
@@ -84,6 +100,7 @@ public class ApplicationDocumentUpload {
         this.storageKey = storageKey;
         this.mimeType = mimeType;
         this.fileSize = fileSize;
+        this.validationStatus = DocumentValidationStatus.PROCESSING;
     }
 
     public static ApplicationDocumentUpload create(
@@ -102,5 +119,18 @@ public class ApplicationDocumentUpload {
                 mimeType,
                 fileSize
         );
+    }
+
+    public void completeValidation(
+            DocumentValidationStatus status,
+            String detectedDocumentType,
+            Double confidence,
+            String message
+    ) {
+        this.validationStatus = status;
+        this.detectedDocumentType = detectedDocumentType;
+        this.validationConfidence = confidence;
+        this.validationMessage = message;
+        this.validatedAt = Instant.now();
     }
 }
