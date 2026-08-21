@@ -12,6 +12,7 @@ import com.project.hugme.domain.checklist.service.MyDocumentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +52,7 @@ public class ApplicationChecklistController {
 
     }
 
+
     @Operation(
             summary = "2. 기존 체크리스트 진입",
             description = "이전 내역이 있으면 그 내용을 불러옵니다."
@@ -71,6 +73,8 @@ public class ApplicationChecklistController {
 
         return ResponseEntity.ok(response);
     }
+
+
 
     @Operation(
             summary = "3. 임대차계약서 업로드 및 OCR 분석",
@@ -223,6 +227,22 @@ public class ApplicationChecklistController {
 
         return ResponseEntity.ok(exists);
     }
+
+    @SecurityRequirements
+    @Operation(
+            summary = "3. 모의테스트 체크리스트 진입",
+            description = "새로운 신청을 생성합니다. - Status 는 READY로 진행"
+    )
+    @PostMapping("/prepare")
+    public ResponseEntity<ApplicationCreateResponse> prepareApplication(
+            @Valid @RequestBody ApplicationCreateRequest request
+    ) {
+        ApplicationCreateResponse response = applicationChecklistService.prepareApplication((long)0, request);
+
+        return ResponseEntity.ok(response);
+
+    }
+
 
 //    @Operation(
 //            summary = "8. 현재 준비서류 조회",
