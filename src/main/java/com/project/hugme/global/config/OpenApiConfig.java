@@ -69,6 +69,8 @@ public class OpenApiConfig {
                             "/api/applications/{applicationId}/answers",
                             "/api/applications/{applicationId}/result-documents",
                             "/api/applications/{applicationId}/documents",
+                            "/api/applications/check",
+                            "/api/applications/completed",
 
                             /*
                              * 모의테스트 체크리스트 API
