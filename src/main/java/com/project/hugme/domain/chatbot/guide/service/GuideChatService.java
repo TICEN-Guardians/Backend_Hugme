@@ -15,11 +15,7 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.document.Document;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.UUID;
@@ -39,7 +35,7 @@ public class GuideChatService {
     private final ChatMemory chatMemory;
     private final GuideSessionService guideSessionService;
 
-    public Flux<ServerSentEvent<Object>> handle(Long userId, ChatRequest request) {
+    public ChatResponse handle(Long userId, ChatRequest request) {
         String sessionId = resolveSessionId(request);
         guideSessionService.rehydrateMemoryIfNeeded(userId, sessionId);
 
@@ -54,7 +50,7 @@ public class GuideChatService {
                 );
                 saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
                 rememberTurn(sessionId, request.message(), response.answer());
-                return streamFinalAnswer(response);
+                return response;
             }
             FeatureType feature = route.featureType();
             String answer = "해당 요청은 " + feature.label() + " 기능이에요. " + feature.label() + "으로 이동하시겠어요?";
@@ -64,7 +60,7 @@ public class GuideChatService {
             );
             saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
             rememberTurn(sessionId, request.message(), response.answer());
-            return streamFinalAnswer(response);
+            return response;
         }
 
         if ("suggestion_request".equals(route.category())) {
@@ -84,14 +80,14 @@ public class GuideChatService {
             );
             saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
             rememberTurn(sessionId, request.message(), response.answer());
-            return streamFinalAnswer(response);
+            return response;
         }
 
         if ("meta".equals(route.category())) {
             String answer = metaAnswerService.generate(sessionId, request.message());
             ChatResponse response = new ChatResponse(sessionId, answer, route.category(), List.of(), List.of(), null);
             saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
-            return streamFinalAnswer(response);
+            return response;
         }
 
         if ("off_topic".equals(route.category())) {
@@ -102,7 +98,7 @@ public class GuideChatService {
             );
             saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
             rememberTurn(sessionId, request.message(), response.answer());
-            return streamFinalAnswer(response);
+            return response;
         }
 
         List<Document> results = hybridSearchService.search(route.rewrittenQuery(), route.category());
@@ -114,32 +110,13 @@ public class GuideChatService {
                 ))
                 .toList();
 
-        StringBuilder answerBuilder = new StringBuilder();
-
-        Flux<ServerSentEvent<Object>> tokenEvents = answerGenerationService
-                .generateStream(sessionId, request.message(), results)
-                .doOnNext(answerBuilder::append)
-                .map(chunk -> ServerSentEvent.builder((Object) chunk).event("token").build());
-
-        Mono<ServerSentEvent<Object>> doneEvent = Mono.fromCallable(() -> {
-                    String answer = answerBuilder.toString();
-                    List<String> suggestedQuestions = suggestedQuestionService.suggest(request.message(), answer, results);
-                    ChatResponse response = new ChatResponse(
-                            sessionId, answer, route.category(), sources, suggestedQuestions, null
-                    );
-                    saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
-                    return ServerSentEvent.builder((Object) response).event("done").build();
-                })
-                .subscribeOn(Schedulers.boundedElastic());
-
-        return tokenEvents.concatWith(doneEvent);
-    }
-
-    private Flux<ServerSentEvent<Object>> streamFinalAnswer(ChatResponse response) {
-        return Flux.just(
-                ServerSentEvent.builder((Object) response.answer()).event("token").build(),
-                ServerSentEvent.builder((Object) response).event("done").build()
+        String answer = answerGenerationService.generate(sessionId, request.message(), results);
+        List<String> suggestedQuestions = suggestedQuestionService.suggest(request.message(), answer, results);
+        ChatResponse response = new ChatResponse(
+                sessionId, answer, route.category(), sources, suggestedQuestions, null
         );
+        saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
+        return response;
     }
 
     // feature/off_topic 답변은 chatClient를 거치지 않아 MessageChatMemoryAdvisor가 자동으로 기록해주지 않으므로 직접 기록한다.

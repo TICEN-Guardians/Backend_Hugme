@@ -10,13 +10,22 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class SuggestedQuestionService {
 
+    // 모델이 목록 마커("- ", "1. ", "1) ", "* ", "• ")를 붙여서 줄 때가 있어, 대화창에 그대로
+    // 전송되는 질문 텍스트에서 앞부분 마커를 제거한다.
+    private static final Pattern LIST_MARKER = Pattern.compile("^[-*•]\\s+|^\\d+[.)]\\s+");
+
     private final ChatClient chatClient;
+
+    private static String stripListMarker(String line) {
+        return LIST_MARKER.matcher(line).replaceFirst("");
+    }
 
     /**
      * 사용자가 "추천 질문 줘"처럼 직접 요청했을 때, 지금까지의 대화 맥락을 바탕으로 후속 질문을 만든다.
@@ -59,6 +68,7 @@ public class SuggestedQuestionService {
 
         return Arrays.stream(result.split("\n"))
                 .map(String::trim)
+                .map(SuggestedQuestionService::stripListMarker)
                 .filter(s -> !s.isBlank())
                 .limit(3)
                 .toList();
@@ -111,6 +121,7 @@ public class SuggestedQuestionService {
 
         return Arrays.stream(result.split("\n"))
                 .map(String::trim)
+                .map(SuggestedQuestionService::stripListMarker)
                 .filter(s -> !s.isBlank())
                 .limit(2)
                 .toList();
