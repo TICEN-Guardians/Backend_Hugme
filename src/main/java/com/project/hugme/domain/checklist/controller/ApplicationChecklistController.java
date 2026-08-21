@@ -180,28 +180,28 @@ public class ApplicationChecklistController {
 
     }
 
-    @Operation(
-            summary = "8. 최종 준비서류 조회",
-            description = "기본·추가·할인 분류별 최종 준비서류를 조회합니다."
-    )
-    @GetMapping("/{applicationId}/result-documents")
-    public ResponseEntity<ResultDocumentListResponse>
-    getResultDocuments(
-            @AuthenticationPrincipal(expression = "userId")
-            Long userId,
-
-            @PathVariable("applicationId")
-            Long applicationId
-    ) {
-        ResultDocumentListResponse response =
-                myDocumentService
-                        .getResultDocuments(
-                                userId,
-                                applicationId
-                        );
-
-        return ResponseEntity.ok(response);
-    }
+//    @Operation(
+//            summary = "8. 최종 준비서류 조회",
+//            description = "기본·추가·할인 분류별 최종 준비서류를 조회합니다."
+//    )
+//    @GetMapping("/{applicationId}/result-documents")
+//    public ResponseEntity<ResultDocumentListResponse>
+//    getResultDocuments(
+//            @AuthenticationPrincipal(expression = "userId")
+//            Long userId,
+//
+//            @PathVariable("applicationId")
+//            Long applicationId
+//    ) {
+//        ResultDocumentListResponse response =
+//                myDocumentService
+//                        .getResultDocuments(
+//                                userId,
+//                                applicationId
+//                        );
+//
+//        return ResponseEntity.ok(response);
+//    }
 
     @Operation(
             summary = "9. 최종 준비서류 유무 확인",
@@ -237,11 +237,19 @@ public class ApplicationChecklistController {
     public ResponseEntity<ApplicationCreateResponse> prepareApplication(
             @Valid @RequestBody ApplicationCreateRequest request
     ) {
-        ApplicationCreateResponse response = applicationChecklistService.prepareApplication((long)0, request);
+        ApplicationCreateResponse response =
+                applicationChecklistService
+                        .prepareApplication(
+                                0L,
+                                request
+                        );
+
 
         return ResponseEntity.ok(response);
 
     }
+
+
 
 
 //    @Operation(

@@ -12,6 +12,7 @@ import com.project.hugme.domain.checklist.dto.question.QuestionResponse;
 import com.project.hugme.domain.checklist.entity.application.Application;
 import com.project.hugme.domain.checklist.entity.application.ApplicationInfo;
 import com.project.hugme.domain.checklist.entity.application.ContractType;
+import com.project.hugme.domain.checklist.entity.application.PartyType;
 import com.project.hugme.domain.checklist.entity.product.HousingType;
 import com.project.hugme.domain.checklist.entity.product.HousingTypeCode;
 import com.project.hugme.domain.checklist.entity.product.Product;
@@ -120,11 +121,48 @@ public class ApplicationChecklistService {
                         )
                 );
 
-        //새로운 Application 엔티티 생성
-        Application newApplication = Application.prepare(user, product);
+        // 모의테스트 기본 주택유형
+        HousingType housingType =
+                housingTypeRepository
+                        .findByHousingTypeCode(
+                                HousingTypeCode.APARTMENT
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "아파트 주택유형이 없습니다."
+                                )
+                        );
 
-        //Application 엔티티 저장
-        Application savedApplication = applicationRepository.save(newApplication);
+        // READY 상태 Application 생성
+        Application application =
+                Application.prepare(
+                        user,
+                        product
+                );
+
+        Application savedApplication =
+                applicationRepository.save(application);
+
+        // OCR 대신 기본값으로 ApplicationInfo 생성
+        ApplicationInfo applicationInfo =
+                ApplicationInfo.create(
+                        savedApplication
+                );
+
+        applicationInfo.updateAndConfirm(
+                housingType,
+                "모의테스트용 주소",
+                ContractType.NEW,
+                PartyType.PERSON,
+                PartyType.PERSON,
+                false,
+                false,
+                false
+        );
+
+        applicationInfoRepository.save(
+                applicationInfo
+        );
 
         return ApplicationCreateResponse.from(
                 savedApplication
