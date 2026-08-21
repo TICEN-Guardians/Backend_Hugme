@@ -2,8 +2,6 @@ package com.project.hugme.domain.chatbot.document.controller;
 
 import com.project.hugme.domain.chatbot.document.dto.DocumentChatResponse;
 import com.project.hugme.domain.chatbot.document.dto.DocumentSearchRequest;
-import com.project.hugme.domain.chatbot.document.dto.DocumentPreparationResponse;
-import com.project.hugme.domain.chatbot.document.dto.DocumentPreparationUpdateRequest;
 import com.project.hugme.domain.chatbot.document.service.DocumentChatService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import jakarta.validation.Valid;
 
 @RestController
 @RequiredArgsConstructor
@@ -40,29 +37,4 @@ public class DocumentChatController {
         return ResponseEntity.ok(response);
     }
 
-
-    @GetMapping("/preparation")
-    @Operation(
-            summary = "서류 및 준비 상태 조회",
-            description = "준비해야 하는 서류 목록을 반환합니다."
-    )
-    public ResponseEntity<DocumentPreparationResponse> getPreparationStatus(
-            @AuthenticationPrincipal(expression = "userId") Long userId
-    ) {
-        return ResponseEntity.ok(documentChatService.getPreparationStatus(userId));
-    }
-
-    @PutMapping("/preparation/{documentId}")
-    @Operation(
-            summary = "서류 준비 상태 변경",
-            description = "각 서류의 준비 상태를 변경합니다."
-    )
-    public ResponseEntity<DocumentPreparationResponse> updatePreparationStatus(
-            @AuthenticationPrincipal(expression = "userId") Long userId,
-            @PathVariable Long documentId,
-            @Valid @RequestBody DocumentPreparationUpdateRequest request
-    ) {
-        return ResponseEntity.ok(documentChatService.updatePreparationStatus(
-                userId, documentId, request));
-    }
 }
