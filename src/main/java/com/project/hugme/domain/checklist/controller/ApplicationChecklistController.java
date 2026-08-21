@@ -37,7 +37,7 @@ public class ApplicationChecklistController {
 
     @Operation(
             summary = "1. 맞춤 체크리스트 진입",
-            description = "이전내역이 존재하면 삭제 후 새로운 신청을 생성합니다."
+            description = "새로운 신청을 생성합니다."
     )
     @PostMapping
     public ResponseEntity<ApplicationCreateResponse> createApplication(
@@ -50,6 +50,7 @@ public class ApplicationChecklistController {
         return ResponseEntity.ok(response);
 
     }
+
     @Operation(
             summary = "2. 기존 체크리스트 진입",
             description = "이전 내역이 있으면 그 내용을 불러옵니다."
@@ -57,12 +58,18 @@ public class ApplicationChecklistController {
     @GetMapping("/current")
     public ResponseEntity<ApplicationCreateResponse> getCurrentApplication(
             @Parameter(hidden = true)
-            @AuthenticationPrincipal(expression = "userId") Long userId
+            @AuthenticationPrincipal(expression = "userId") Long userId,
+
+            @RequestParam("productCode") ProductCode productCode
     ) {
-        ApplicationCreateResponse response = applicationChecklistService.getCurrentApplication(userId);
+        ApplicationCreateResponse response =
+                applicationChecklistService
+                        .getCurrentApplication(
+                                userId,
+                                productCode
+                        );
 
         return ResponseEntity.ok(response);
-
     }
 
     @Operation(
@@ -195,7 +202,6 @@ public class ApplicationChecklistController {
     @Operation(
             summary = "9. 최종 준비서류 유무 확인",
             description = """
-                productCode가 없으면 기존 방식으로 최종 준비서류 유무를 확인합니다.
                 productCode가 있으면 완료된 신청의 상품과 요청 상품이 같은지도 확인합니다.
                 """
     )
@@ -206,8 +212,7 @@ public class ApplicationChecklistController {
             Long userId,
 
             @RequestParam(
-                    name = "productCode",
-                    required = false
+                    name = "productCode"
             )
             ProductCode productCode
     ) {
