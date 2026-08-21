@@ -8,13 +8,10 @@ import com.project.hugme.domain.diagnosis.dto.internal.FastApiRegistryResponse;
 import com.project.hugme.domain.diagnosis.dto.request.PropertyResolveRequest;
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisCreateRequest;
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisDetailsRequest;
-import com.project.hugme.domain.diagnosis.dto.response.PropertyResolveResponse;
-import com.project.hugme.domain.diagnosis.dto.response.DiagnosisCreateResponse;
-import com.project.hugme.domain.diagnosis.dto.response.DiagnosisReportResponse;
-import com.project.hugme.domain.diagnosis.dto.response.RegistryOcrResponse;
-import com.project.hugme.domain.diagnosis.dto.response.RegistrySummaryResponse;
+import com.project.hugme.domain.diagnosis.dto.response.*;
 import com.project.hugme.domain.diagnosis.entity.Diagnosis;
 import com.project.hugme.domain.diagnosis.entity.DiagnosisResult;
+import com.project.hugme.domain.diagnosis.enums.DiagnosisStatus;
 import com.project.hugme.domain.diagnosis.repository.DiagnosisRepository;
 import com.project.hugme.domain.diagnosis.repository.DiagnosisResultRepository;
 import com.project.hugme.domain.diagnosis.enums.HousingType;
@@ -37,8 +34,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertySearchRequest;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertySearchResponse;
 import com.project.hugme.domain.diagnosis.dto.request.PropertySearchRequest;
-import com.project.hugme.domain.diagnosis.dto.response.PropertySearchResponse;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -288,6 +285,29 @@ public class DiagnosisService {
                     exception
             );
         }
+    }
+    public List<DiagnosisListResponse> getCompletedDiagnoses(
+            Long userId
+    ) {
+        List<Diagnosis> diagnoses =
+                diagnosisRepository
+                        .findAllByUserUserIdOrderByUpdatedAtDesc(
+                                userId
+                        );
+
+        List<DiagnosisListResponse> responses =
+                new ArrayList<>();
+
+        for (Diagnosis diagnosis : diagnoses) {
+            DiagnosisListResponse response =
+                    DiagnosisListResponse.from(
+                            diagnosis
+                    );
+
+            responses.add(response);
+        }
+
+        return responses;
     }
 }
 
