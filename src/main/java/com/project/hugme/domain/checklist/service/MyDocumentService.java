@@ -209,51 +209,23 @@ public class MyDocumentService {
     public boolean hasResultDocuments(
             Long userId, ProductCode productCode
     ) {
-        // productCode가 없으면 기존 로직 사용
-        if (productCode == null) {
-            return hasResultDocuments(userId);
-        }
+        Product product =
+                productRepository
+                        .findByProductCode(productCode)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "존재하지 않는 상품입니다: "
+                                                + productCode
+                                )
+                        );
 
-        Optional<Application> existingApplication =
-                applicationRepository.findByUser_UserId(userId);
-
-        if (existingApplication.isEmpty()) {
-            return false;
-        }
-
-        Application application =
-                existingApplication.get();
-
-        boolean completed =
-                application.getApplicationStatus()
-                        == ApplicationStatus.DONE;
-
-        ProductCode existingProductCode =
-                application
-                        .getProduct()
-                        .getProductCode();
-
-        boolean sameProduct =
-                existingProductCode == productCode;
-
-        boolean documentsExist =
-                hasResultDocuments(userId);
-
-        return completed
-                && sameProduct
-                && documentsExist;
+        return applicationRepository
+                .findLatestCompletedApplication(
+                        userId,
+                        product.getProductId()
+                )
+                .isPresent();
     }
 
-    public boolean hasResultDocuments(Long userId) {
-        Application application = applicationRepository.findByUser_UserId(userId)
-                .orElseThrow(()->new IllegalArgumentException("신청 정보를 찾을 수 없습니다."));
-
-        boolean result=false;
-        if(application.getApplicationStatus()== ApplicationStatus.DONE){
-            result=true;
-        }
-        return result;
-
-    }
 
 }

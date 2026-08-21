@@ -78,17 +78,17 @@ public class ApplicationChecklistService {
                         )
                 );
 
-        Optional<Application> existingApplication =
-                applicationRepository.findByUser_UserId(userId);
+//        Optional<Application> existingApplication =
+//                applicationRepository.findByUser_UserId(userId);
 
-        if (existingApplication.isPresent()) {
-            Application application = existingApplication.get();
-
-            applicationRepository.delete(application);
-
-            // 자식 데이터와 기존 Application 삭제 SQL을 즉시 실행
-            applicationRepository.flush();
-        }
+//        if (existingApplication.isPresent()) {
+//            Application application = existingApplication.get();
+//
+//            applicationRepository.delete(application);
+//
+//            // 자식 데이터와 기존 Application 삭제 SQL을 즉시 실행
+//            applicationRepository.flush();
+//        }
         //새로운 Application 엔티티 생성
         Application newApplication = Application.create(user, product);
 
@@ -102,27 +102,33 @@ public class ApplicationChecklistService {
     }
 
 
-    public ApplicationCreateResponse getCurrentApplication(Long userId) {
 
-       Application application = applicationRepository.findByUser_UserId(userId)
-               .orElseThrow(() ->
-                       new IllegalArgumentException(
-                               "진행 중인 신청이 없습니다."
-                       )
-               );
+    public ApplicationCreateResponse getCurrentApplication(Long userId,ProductCode productCode) {
 
-       /*
-        Long applicationId,
-        ProductCode productCode,
-        ApplicationStatus applicationStatus
-        */
+        Product product =
+                productRepository
+                        .findByProductCode(productCode)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "존재하지 않는 상품입니다: "
+                                                + productCode
+                                )
+                        );
 
+        Application application =
+                applicationRepository
+                        .findLatestCompletedApplication(
+                                userId,
+                                product.getProductId()
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "완료된 이전 체크리스트가 없습니다."
+                                )
+                        );
 
-        return new ApplicationCreateResponse(
-                application.getApplicationId(),
-                application.getProduct().getProductCode(),
-                application.getApplicationStatus()
-
+        return ApplicationCreateResponse.from(
+                application
         );
 
     }
