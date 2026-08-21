@@ -100,6 +100,38 @@ public class ApplicationChecklistService {
         );
 
     }
+    @Transactional
+    public ApplicationCreateResponse prepareApplication(Long userId, ApplicationCreateRequest request) {
+
+        //Application 엔티티를 만들기 위해 필요한 User 엔티티를 조회
+        //유저ID를 바탕으로 유저 상태 확인 - 이메인 인증전인지,탈퇴한 회원인지 확인
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+
+
+        //Application 엔티티를 만들기 위해 필요한 Product 엔티티를 조회
+        Product product = productRepository
+                .findByProductCode(request.productCode())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "존재하지 않는 상품입니다: "
+                                        + request.productCode()
+                        )
+                );
+
+        //새로운 Application 엔티티 생성
+        Application newApplication = Application.prepare(user, product);
+
+        //Application 엔티티 저장
+        Application savedApplication = applicationRepository.save(newApplication);
+
+        return ApplicationCreateResponse.from(
+                savedApplication
+        );
+
+    }
+
 
 
 

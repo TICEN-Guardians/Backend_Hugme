@@ -95,6 +95,21 @@ public class Application {
         return application;
     }
 
+    public static Application prepare(
+            User user,
+            Product product
+    ) {
+        Application application =
+                new Application();
+
+        application.user = user;
+        application.product = product;
+        application.applicationStatus =
+                ApplicationStatus.READY;
+
+        return application;
+    }
+
 
 
     public void complete() {

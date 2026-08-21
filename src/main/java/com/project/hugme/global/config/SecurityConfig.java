@@ -51,6 +51,7 @@ public class SecurityConfig {
                                 "/api/auth/mail/**",
                                 "/api/auth/token/reissue",
                                 "/api/products/**",
+                                "/api/applications/prepare/**",
                                 "/api/ai/**",
                                 "/oauth2/**",
                                 "/login/oauth2/**",
