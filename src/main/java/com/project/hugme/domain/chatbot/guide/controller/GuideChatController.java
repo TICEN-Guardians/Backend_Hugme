@@ -2,6 +2,7 @@ package com.project.hugme.domain.chatbot.guide.controller;
 
 import com.project.hugme.domain.auth.security.CustomUserDetails;
 import com.project.hugme.domain.chatbot.guide.dto.ChatRequest;
+import com.project.hugme.domain.chatbot.guide.dto.ChatResponse;
 import com.project.hugme.domain.chatbot.guide.dto.EntryQuestion;
 import com.project.hugme.domain.chatbot.guide.dto.GuideChatHistoryDto;
 import com.project.hugme.domain.chatbot.guide.dto.SessionSummaryDto;
@@ -10,13 +11,10 @@ import com.project.hugme.domain.chatbot.guide.service.GuideSessionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -29,18 +27,14 @@ public class GuideChatController {
     private final GuideChatService guideChatService;
     private final GuideSessionService guideSessionService;
 
-    @PostMapping(value = "/messages", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PostMapping("/messages")
     @Operation(
-            summary = "챗봇 메시지 전송(SSE 스트리밍)",
-            description = "사용자 질문을 받아 카테고리 분류, 검색, 답변 생성을 수행하고, 답변을 토큰 단위 스트리밍합니다. "
+            summary = "챗봇 메시지 전송",
+            description = "사용자 질문을 받아 카테고리 분류, 검색, 답변 생성을 수행하고, 완성된 답변을 반환합니다."
     )
-    public ResponseEntity<Flux<ServerSentEvent<Object>>> sendMessage(@RequestBody ChatRequest request) {
+    public ChatResponse sendMessage(@RequestBody ChatRequest request) {
         Long userId = extractUserId();
-        Flux<ServerSentEvent<Object>> stream = guideChatService.handle(userId, request);
-
-        return ResponseEntity.ok()
-                .header("X-Accel-Buffering", "no")
-                .body(stream);
+        return guideChatService.handle(userId, request);
     }
 
     @Operation(summary = "세션 채팅 이력 조회", description = "로그인한 사용자의 특정 상담 세션 대화 이력을 시간순으로 조회합니다.")

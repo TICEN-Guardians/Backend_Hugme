@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class GuideSessionService {
 
-    private static final int MAX_SESSIONS_PER_USER = 5;
+    private static final int MAX_SESSIONS_PER_USER = 10;
 
     private final GuideChatHistoryRepository guideChatHistoryRepository;
     private final ChatMemory chatMemory;

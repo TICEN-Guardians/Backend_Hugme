@@ -54,6 +54,7 @@ public class Application {
     )
     private Instant createdAt;
 
+
     @OneToOne(
             mappedBy = "application",
             cascade = CascadeType.REMOVE,
@@ -91,6 +92,21 @@ public class Application {
         application.product = product;
         application.applicationStatus =
                 ApplicationStatus.PROGRESS;
+
+        return application;
+    }
+
+    public static Application prepare(
+            User user,
+            Product product
+    ) {
+        Application application =
+                new Application();
+
+        application.user = user;
+        application.product = product;
+        application.applicationStatus =
+                ApplicationStatus.READY;
 
         return application;
     }

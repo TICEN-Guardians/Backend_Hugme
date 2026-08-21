@@ -90,7 +90,7 @@ public class IntentClassificationService {
         - category가 "feature"이면 featureType은 아래 기능 목록 중 하나로 판단
         - category가 "product", "prevention", "suggestion_request", "meta", "off_topic"이면 featureType은 null
 
-        [product vs prevention vs feature(서류) 구분 우선순위]
+        [product vs prevention vs feature(서류, 위험도 진단) 구분 우선순위]
         - "가입 자격·조건·한도·보증료가 얼마냐"를 묻는 질문 → product
         - "특정 서류 하나를 어떻게 읽고/뭘 확인하고/어디서·어떻게 발급받느냐"를 묻는 질문 → prevention
           (발급 방법도 "그 서류에 대한 일반 상식"이라 prevention입니다. 예: "등기부등본 어떻게 떼요?",

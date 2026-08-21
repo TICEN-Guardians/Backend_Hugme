@@ -68,7 +68,18 @@ public class OpenApiConfig {
                             "/api/applications/{applicationId}/questions",
                             "/api/applications/{applicationId}/answers",
                             "/api/applications/{applicationId}/result-documents",
-                            "/api/applications/{applicationId}/documents"
+                            "/api/applications/{applicationId}/documents",
+                            "/api/applications/check",
+                            "/api/applications/completed",
+
+                            /*
+                             * 모의테스트 체크리스트 API
+                             */
+                            "/api/applications/prepare",
+                            "/api/applications/prepare/{applicationId}/info",
+                            "/api/applications/prepare/{applicationId}/questions",
+                            "/api/applications/prepare/{applicationId}/answers",
+                            "/api/applications/prepare/{applicationId}/result-documents"
                     );
             Paths reorderedPaths =
                     new Paths();

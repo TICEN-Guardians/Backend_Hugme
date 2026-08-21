@@ -1,17 +1,12 @@
 package com.project.hugme.domain.checklist.service;
 
 
-import com.project.hugme.domain.checklist.dto.application.ApplicationCreateRequest;
-import com.project.hugme.domain.checklist.dto.application.ApplicationCreateResponse;
-import com.project.hugme.domain.checklist.dto.application.OCRResponse;
-import com.project.hugme.domain.checklist.dto.application.OCRUpdateRequest;
+import com.project.hugme.domain.checklist.dto.application.*;
 import com.project.hugme.domain.checklist.dto.question.QuestionAnswersRequest;
 import com.project.hugme.domain.checklist.dto.question.QuestionAnswersResponse;
 import com.project.hugme.domain.checklist.dto.question.QuestionListResponse;
 import com.project.hugme.domain.checklist.dto.question.QuestionResponse;
-import com.project.hugme.domain.checklist.entity.application.Application;
-import com.project.hugme.domain.checklist.entity.application.ApplicationInfo;
-import com.project.hugme.domain.checklist.entity.application.ContractType;
+import com.project.hugme.domain.checklist.entity.application.*;
 import com.project.hugme.domain.checklist.entity.product.HousingType;
 import com.project.hugme.domain.checklist.entity.product.HousingTypeCode;
 import com.project.hugme.domain.checklist.entity.product.Product;
@@ -78,17 +73,17 @@ public class ApplicationChecklistService {
                         )
                 );
 
-        Optional<Application> existingApplication =
-                applicationRepository.findByUser_UserId(userId);
+//        Optional<Application> existingApplication =
+//                applicationRepository.findByUser_UserId(userId);
 
-        if (existingApplication.isPresent()) {
-            Application application = existingApplication.get();
-
-            applicationRepository.delete(application);
-
-            // 자식 데이터와 기존 Application 삭제 SQL을 즉시 실행
-            applicationRepository.flush();
-        }
+//        if (existingApplication.isPresent()) {
+//            Application application = existingApplication.get();
+//
+//            applicationRepository.delete(application);
+//
+//            // 자식 데이터와 기존 Application 삭제 SQL을 즉시 실행
+//            applicationRepository.flush();
+//        }
         //새로운 Application 엔티티 생성
         Application newApplication = Application.create(user, product);
 
@@ -100,29 +95,104 @@ public class ApplicationChecklistService {
         );
 
     }
+    @Transactional
+    public ApplicationCreateResponse prepareApplication(Long userId, ApplicationCreateRequest request) {
+
+        //Application 엔티티를 만들기 위해 필요한 User 엔티티를 조회
+        //유저ID를 바탕으로 유저 상태 확인 - 이메인 인증전인지,탈퇴한 회원인지 확인
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
 
-    public ApplicationCreateResponse getCurrentApplication(Long userId) {
+        //Application 엔티티를 만들기 위해 필요한 Product 엔티티를 조회
+        Product product = productRepository
+                .findByProductCode(request.productCode())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "존재하지 않는 상품입니다: "
+                                        + request.productCode()
+                        )
+                );
 
-       Application application = applicationRepository.findByUser_UserId(userId)
-               .orElseThrow(() ->
-                       new IllegalArgumentException(
-                               "진행 중인 신청이 없습니다."
-                       )
-               );
+        // 모의테스트 기본 주택유형
+        HousingType housingType =
+                housingTypeRepository
+                        .findByHousingTypeCode(
+                                HousingTypeCode.APARTMENT
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "아파트 주택유형이 없습니다."
+                                )
+                        );
 
-       /*
-        Long applicationId,
-        ProductCode productCode,
-        ApplicationStatus applicationStatus
-        */
+        // READY 상태 Application 생성
+        Application application =
+                Application.prepare(
+                        user,
+                        product
+                );
+
+        Application savedApplication =
+                applicationRepository.save(application);
+
+        // OCR 대신 기본값으로 ApplicationInfo 생성
+        ApplicationInfo applicationInfo =
+                ApplicationInfo.create(
+                        savedApplication
+                );
+
+        applicationInfo.updateAndConfirm(
+                housingType,
+                "모의테스트용 주소",
+                ContractType.NEW,
+                PartyType.PERSON,
+                PartyType.PERSON,
+                false,
+                false,
+                false
+        );
+
+        applicationInfoRepository.save(
+                applicationInfo
+        );
+
+        return ApplicationCreateResponse.from(
+                savedApplication
+        );
+
+    }
 
 
-        return new ApplicationCreateResponse(
-                application.getApplicationId(),
-                application.getProduct().getProductCode(),
-                application.getApplicationStatus()
 
+
+    public ApplicationCreateResponse getCurrentApplication(Long userId,ProductCode productCode) {
+
+        Product product =
+                productRepository
+                        .findByProductCode(productCode)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "존재하지 않는 상품입니다: "
+                                                + productCode
+                                )
+                        );
+
+        Application application =
+                applicationRepository
+                        .findLatestCompletedApplication(
+                                userId,
+                                product.getProductId()
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "완료된 이전 체크리스트가 없습니다."
+                                )
+                        );
+
+        return ApplicationCreateResponse.from(
+                application
         );
 
     }
@@ -442,7 +512,14 @@ public class ApplicationChecklistService {
                 selectedOptions
         );
 
-        applicationInfo.getApplication().complete();
+        Application application =
+                applicationInfo.getApplication();
+
+        if (application.getApplicationStatus()
+                == ApplicationStatus.PROGRESS) {
+
+            application.complete();
+        }
 
         return new QuestionAnswersResponse(
                 request.currentStep(),
@@ -472,6 +549,33 @@ public class ApplicationChecklistService {
         }
         return false;
     }
+
+    @Transactional(readOnly = true)
+    public List<CompletedApplicationResponse> getCompletedApplications(
+            Long userId
+    ) {
+        List<Application> applications =
+                applicationRepository
+                        .findAllCompletedApplications(
+                                userId,
+                                ApplicationStatus.DONE
+                        );
+
+        List<CompletedApplicationResponse> responses =
+                new ArrayList<>();
+
+        for (Application application : applications) {
+            CompletedApplicationResponse response =
+                    CompletedApplicationResponse.from(
+                            application
+                    );
+
+            responses.add(response);
+        }
+
+        return responses;
+    }
+
 
 
 }
