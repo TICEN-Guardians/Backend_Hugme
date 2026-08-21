@@ -53,9 +53,11 @@ public class DocumentChatService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public DocumentPreparationResponse getPreparationStatus(Long userId) {
-        Application application = getApplicationByUserId(userId);
-        Long applicationId = application.getApplicationId();
+    public DocumentPreparationResponse getPreparationStatus(
+            Long userId,
+            Long applicationId
+    ) {
+        Application application = getOwnedApplication(userId, applicationId);
         List<ChecklistDocumentResult> results =
                 checklistDocumentResultRepository.findCurrentDocuments(applicationId, userId);
         Set<Long> checkedDocumentIds = preparationCheckRepository.findCheckedDocumentIds(applicationId);
@@ -91,11 +93,11 @@ public class DocumentChatService {
     @Transactional
     public DocumentPreparationResponse updatePreparationStatus(
             Long userId,
+            Long applicationId,
             Long documentId,
             DocumentPreparationUpdateRequest request
     ) {
-        Application application = getApplicationByUserId(userId);
-        Long applicationId = application.getApplicationId();
+        Application application = getOwnedApplication(userId, applicationId);
         ChecklistDocumentResult result = checklistDocumentResultRepository
                 .findCurrentDocuments(applicationId, userId).stream()
                 .filter(item -> item.getDocument().getDocumentId().equals(documentId))
@@ -111,11 +113,11 @@ public class DocumentChatService {
             preparationCheckRepository.deleteByApplicationApplicationIdAndDocumentDocumentId(
                     applicationId, documentId);
         }
-        return getPreparationStatus(userId);
+        return getPreparationStatus(userId, applicationId);
     }
 
-    private Application getApplicationByUserId(Long userId) {
-        return applicationRepository.findByUser_UserId(userId)
+    private Application getOwnedApplication(Long userId, Long applicationId) {
+        return applicationRepository.findByApplicationIdAndUser_UserId(applicationId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("신청 정보를 찾을 수 없습니다."));
     }
 
