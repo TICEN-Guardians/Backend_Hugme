@@ -3,6 +3,7 @@ package com.project.hugme.global.exception;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import com.project.hugme.domain.auth.exception.InvalidCredentialsException;
+import com.project.hugme.domain.diagnosis.exception.DiagnosisException;
 import com.project.hugme.domain.auth.exception.RefreshTokenReuseException;
 import com.project.hugme.domain.user.exception.WithdrawnUserException;
 import com.project.hugme.domain.user.exception.EmailVerificationRequiredException;
@@ -193,6 +194,19 @@ public class GlobalExceptionHandler {
     /**
      * 처리되지 않은 서버 내부 오류
      */
+    @ExceptionHandler(DiagnosisException.class)
+    public ResponseEntity<ErrorResponse> handleDiagnosisException(
+            DiagnosisException exception
+    ) {
+        return ResponseEntity
+                .status(exception.getStatus())
+                .body(new ErrorResponse(
+                        exception.getStatus().value(),
+                        exception.getCode(),
+                        exception.getMessage()
+                ));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(
             Exception exception

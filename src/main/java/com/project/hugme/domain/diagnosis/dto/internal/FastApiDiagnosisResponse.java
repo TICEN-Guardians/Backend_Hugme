@@ -6,6 +6,7 @@ import java.util.Map;
 
 public record FastApiDiagnosisResponse(
         Long analysisId,
+        String mode,
         String status,
         Instant analyzedAt,
         Property property,

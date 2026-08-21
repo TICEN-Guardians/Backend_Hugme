@@ -23,12 +23,13 @@ public record FastApiRegistryResponse(
     public record Owner(String name, String share) {}
     public record Result(@JsonProperty("match_status") String matchStatus) {}
 
-    public RegistryOcrResponse toResponse() {
+    public RegistryOcrResponse toResponse(String addressMatchStatus) {
         List<RegistryOcrResponse.Owner> owners = ownerInfo.currentOwners().stream()
                 .map(owner -> new RegistryOcrResponse.Owner(owner.name(), owner.share()))
                 .toList();
         return new RegistryOcrResponse(ownerInfo.parseStatus(), ownerInfo.parseConfidence(),
                 ownerInfo.propertyAddress(), ownerInfo.dongName(), ownerInfo.floor(),
-                ownerInfo.hoName(), ownerInfo.exclusiveArea(), owners, overallMatchStatus);
+                ownerInfo.hoName(), ownerInfo.exclusiveArea(), owners,
+                overallMatchStatus, addressMatchStatus);
     }
 }

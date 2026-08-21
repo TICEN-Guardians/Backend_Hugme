@@ -12,7 +12,8 @@ public record RegistryOcrResponse(
         String hoName,
         BigDecimal exclusiveArea,
         List<Owner> currentOwners,
-        String overallMatchStatus
+        String overallMatchStatus,
+        String addressMatchStatus
 ) {
     public record Owner(String name, String share) {}
 }
