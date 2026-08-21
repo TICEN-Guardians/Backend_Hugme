@@ -1,6 +1,7 @@
 package com.project.hugme.domain.checklist.entity.application;
 
 import com.project.hugme.domain.checklist.entity.product.HousingType;
+import com.project.hugme.global.crypto.AddressCryptoConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -31,9 +32,12 @@ public class ApplicationInfo {
     @JoinColumn(name = "housing_type_id")
     private HousingType housingType;
 
+    @Convert(
+            converter = AddressCryptoConverter.class
+    )
     @Column(
             name = "contract_address",
-            length = 500
+            columnDefinition = "text"
     )
     private String contractAddress;
 
