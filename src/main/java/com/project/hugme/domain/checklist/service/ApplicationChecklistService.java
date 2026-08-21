@@ -1,10 +1,7 @@
 package com.project.hugme.domain.checklist.service;
 
 
-import com.project.hugme.domain.checklist.dto.application.ApplicationCreateRequest;
-import com.project.hugme.domain.checklist.dto.application.ApplicationCreateResponse;
-import com.project.hugme.domain.checklist.dto.application.OCRResponse;
-import com.project.hugme.domain.checklist.dto.application.OCRUpdateRequest;
+import com.project.hugme.domain.checklist.dto.application.*;
 import com.project.hugme.domain.checklist.dto.question.QuestionAnswersRequest;
 import com.project.hugme.domain.checklist.dto.question.QuestionAnswersResponse;
 import com.project.hugme.domain.checklist.dto.question.QuestionListResponse;
@@ -552,6 +549,33 @@ public class ApplicationChecklistService {
         }
         return false;
     }
+
+    @Transactional(readOnly = true)
+    public List<CompletedApplicationResponse> getCompletedApplications(
+            Long userId
+    ) {
+        List<Application> applications =
+                applicationRepository
+                        .findAllCompletedApplications(
+                                userId,
+                                ApplicationStatus.DONE
+                        );
+
+        List<CompletedApplicationResponse> responses =
+                new ArrayList<>();
+
+        for (Application application : applications) {
+            CompletedApplicationResponse response =
+                    CompletedApplicationResponse.from(
+                            application
+                    );
+
+            responses.add(response);
+        }
+
+        return responses;
+    }
+
 
 
 }

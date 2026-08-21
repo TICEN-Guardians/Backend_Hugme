@@ -22,6 +22,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/applications")
@@ -226,6 +228,25 @@ public class ApplicationChecklistController {
                 );
 
         return ResponseEntity.ok(exists);
+    }
+
+    @Operation(
+            summary = "10. 저장된 체크리스트 목록 조회",
+            description = "로그인 사용자의 완료된 체크리스트를 최신순으로 모두 조회합니다."
+    )
+    @GetMapping("/completed")
+    public ResponseEntity<List<CompletedApplicationResponse>>
+    getCompletedApplications(
+            @AuthenticationPrincipal(expression = "userId")
+            Long userId
+    ) {
+        List<CompletedApplicationResponse> response =
+                applicationChecklistService
+                        .getCompletedApplications(
+                                userId
+                        );
+
+        return ResponseEntity.ok(response);
     }
 
 
