@@ -45,3 +45,6 @@ out/
 build/
 .idea/
 *.iml
+
+src/main/resources/models/bge-m3/model.onnx_data
+.gradle-user/
