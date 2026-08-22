@@ -18,4 +18,9 @@ public interface ApplicationDocumentUploadRepository
             Long applicationId,
             Long userId
     );
+
+    boolean existsByApplicationApplicationIdAndDocumentDocumentId(
+            Long applicationId,
+            Long documentId
+    );
 }

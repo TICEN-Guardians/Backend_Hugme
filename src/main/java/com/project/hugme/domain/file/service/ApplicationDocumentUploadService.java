@@ -47,6 +47,12 @@ public class ApplicationDocumentUploadService {
             throw new IllegalArgumentException("해당 신청에 포함된 준비서류가 아닙니다.");
         }
 
+        if (uploadRepository.existsByApplicationApplicationIdAndDocumentDocumentId(
+                applicationId, documentId)) {
+            throw new IllegalArgumentException(
+                    "서류별로 파일은 하나만 업로드할 수 있습니다. 기존 파일을 삭제한 뒤 다시 업로드해 주세요.");
+        }
+
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("서류정보를 찾을 수 없습니다."));
         String mimeType = uploadFileValidator.validateAndDetectMimeType(file);
