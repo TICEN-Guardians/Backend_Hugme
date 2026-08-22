@@ -13,6 +13,7 @@ import java.util.Map;
 
 public record FastApiDiagnosisRequest(
         Long analysisId,
+        String mode,
         String address,
         String dongName,
         String hoName,
@@ -48,6 +49,7 @@ public record FastApiDiagnosisRequest(
 
         return new FastApiDiagnosisRequest(
                 diagnosis.getAnalysisId(),
+                diagnosis.getMode().name(),
                 diagnosis.getAddress(),
                 diagnosis.getDongName(),
                 diagnosis.getHoName(),

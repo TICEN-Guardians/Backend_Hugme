@@ -5,6 +5,8 @@ import java.util.List;
 
 public record PropertySearchResponse(
         String normalizedAddress,
+        String roadAddress,
+        String jibunAddress,
         String buildingName,
         List<PropertyCandidateResponse> candidates,
         List<AddressCandidateResponse> addressCandidates
