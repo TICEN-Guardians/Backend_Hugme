@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 class RightTypeMigrationContractTest {
 
     private static final Path MIGRATION = Path.of(
-            "src/main/resources/db/migration/"
-                    + "V5__add_mortgage_transfer_registry_right_type.sql"
+            "src/main/resources/db/migration/rds/"
+                    + "V9__add_mortgage_transfer_registry_right_type.sql"
     );
 
     @Test

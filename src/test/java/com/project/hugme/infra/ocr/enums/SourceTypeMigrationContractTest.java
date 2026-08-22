@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 class SourceTypeMigrationContractTest {
 
     private static final Path MIGRATION = Path.of(
-            "src/main/resources/db/migration/"
+            "src/main/resources/db/migration/rds/"
                     + "V6__add_pdf_llm_registry_source_type.sql"
     );
 

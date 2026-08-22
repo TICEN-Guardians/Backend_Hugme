@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class DiagnosisModeMigrationContractTest {
 
     private static final Path MIGRATION = Path.of(
-            "src/main/resources/db/migration/V8__add_diagnosis_mode_and_anonymous_access.sql"
+            "src/main/resources/db/migration/rds/V8__add_diagnosis_mode_and_anonymous_access.sql"
     );
 
     @Test
