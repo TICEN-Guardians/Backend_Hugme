@@ -47,28 +47,30 @@ public record FastApiDiagnosisResponse(
 
     public record Risk(
             Integer score,
+            Integer baseScore,
             String grade,
             Breakdown breakdown,
             Weights weights,
-            Boolean gradeOverridden,
+            Integer scoreFloor,
+            List<String> floorReasons,
+            Boolean scoreFloorApplied,
             Boolean provisionalCollateralBasis
     ) {
     }
 
     public record Breakdown(
-            Integer underwater,
-            Integer rollover,
-            Integer property,
-            Integer market
+            Integer priceBurden,
+            Integer leaseMarketDeviation,
+            Integer marketTrend,
+            Integer policyAdjustment,
+            Integer rightsAdjustment
     ) {
     }
 
-    /** 위험요인별 만점. 클라이언트가 만점을 따로 갖지 않도록 AI가 함께 내려준다. */
     public record Weights(
-            Integer underwater,
-            Integer rollover,
-            Integer property,
-            Integer market,
+            Integer priceBurden,
+            Integer leaseMarketDeviation,
+            Integer marketTrend,
             Integer total
     ) {
     }
@@ -131,7 +133,6 @@ public record FastApiDiagnosisResponse(
     ) {
     }
 
-    /** label은 목록에 쓰는 명사형 요약, description은 실행 문장. */
     public record ReportAction(
             String label,
             String description
