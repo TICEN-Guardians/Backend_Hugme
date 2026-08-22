@@ -35,6 +35,7 @@ import com.project.hugme.infra.ai.diagnosis.FastApiDiagnosisClient;
 import com.project.hugme.infra.ocr.entity.LandlordWatchlistCheck;
 import com.project.hugme.infra.ocr.entity.RegistryOwner;
 import com.project.hugme.infra.ocr.entity.RegistryResult;
+import com.project.hugme.infra.ocr.entity.RegistryRight;
 import com.project.hugme.infra.ocr.enums.ParseStatus;
 import com.project.hugme.infra.ocr.repository.LandlordWatchlistCheckRepository;
 import com.project.hugme.infra.ocr.repository.RegistryOwnerRepository;
@@ -140,21 +141,23 @@ public class DiagnosisService {
     ) {
         Diagnosis diagnosis = findAccessible(userId, analysisId, accessToken);
         ensureEditable(diagnosis);
-        boolean registryReady = validateRegistryAddressIfPresent(
+        RegistryAddressValidation registryValidation = validateRegistryAddressIfPresent(
                 diagnosis,
                 analysisId,
                 request.address(),
                 request.dongName(),
                 request.hoName(),
-                request.propertySnapshot()
+                request.propertySnapshot(),
+                request.registryAddressReviewConfirmed()
         );
         diagnosis.updateAddress(
                 request.address(),
                 request.dongName(),
                 request.hoName(),
-                writePropertySnapshot(request.propertySnapshot())
+                writePropertySnapshot(request.propertySnapshot()),
+                registryValidation.reviewConfirmed()
         );
-        diagnosis.markAddressConfirmed(registryReady);
+        diagnosis.markAddressConfirmed(registryValidation.registryReady());
     }
 
     @Transactional
@@ -167,13 +170,14 @@ public class DiagnosisService {
         Diagnosis diagnosis = findAccessible(userId, analysisId, accessToken);
         ensureEditable(diagnosis);
         validateDetails(diagnosis, request);
-        boolean registryReady = validateRegistryAddressIfPresent(
+        RegistryAddressValidation registryValidation = validateRegistryAddressIfPresent(
                 diagnosis,
                 analysisId,
                 request.address(),
                 request.dongName(),
                 request.hoName(),
-                request.propertySnapshot()
+                request.propertySnapshot(),
+                request.registryAddressReviewConfirmed()
         );
         diagnosis.updateDetails(
                 request.address(),
@@ -185,9 +189,10 @@ public class DiagnosisService {
                 request.exclusiveArea(),
                 request.floor(),
                 normalizeOptional(request.landlordName()),
-                writePropertySnapshot(request.propertySnapshot())
+                writePropertySnapshot(request.propertySnapshot()),
+                registryValidation.reviewConfirmed()
         );
-        diagnosis.markDetailsReady(registryReady);
+        diagnosis.markDetailsReady(registryValidation.registryReady());
     }
 
     @Transactional
@@ -221,6 +226,7 @@ public class DiagnosisService {
                 || addressMatchStatus
                 == RegistryAddressMatchStatus.PENDING_ADDRESS_CONFIRMATION);
         diagnosis.markRegistryProcessed(successful);
+        diagnosis.resetRegistryAddressReviewConfirmation();
         return response.toResponse(addressMatchStatus.name());
     }
 
@@ -249,7 +255,8 @@ public class DiagnosisService {
                             diagnosis.getHoName(),
                             readPropertySnapshot(diagnosis.getPropertySnapshot()),
                             registryResult.getRawAddress()
-                    )
+                    ),
+                    diagnosis.isRegistryAddressReviewConfirmed()
             );
         }
         List<LandlordWatchlistCheck> checks = registryResult == null
@@ -308,10 +315,14 @@ public class DiagnosisService {
                     exception
             );
         }
-        RegistrySummaryResponse registry = diagnosis.getMode() == DiagnosisMode.DETAILED
-                ? findRegistrySummary(analysisId)
-                : null;
-        return DiagnosisReportResponse.of(response, registry);
+        RegistryReportData registry = diagnosis.getMode() == DiagnosisMode.DETAILED
+                ? findRegistryReportData(diagnosis)
+                : new RegistryReportData(null, null);
+        return DiagnosisReportResponse.of(
+                response,
+                registry.summary(),
+                registry.verification()
+        );
     }
 
     private Diagnosis findAccessible(
@@ -400,38 +411,46 @@ public class DiagnosisService {
         }
     }
 
-    private boolean validateRegistryAddressIfPresent(
+    private RegistryAddressValidation validateRegistryAddressIfPresent(
             Diagnosis diagnosis,
             Long analysisId,
             String address,
             String dongName,
             String hoName,
-            Map<String, Object> propertySnapshot
+            Map<String, Object> propertySnapshot,
+            boolean reviewConfirmed
     ) {
         if (diagnosis.getMode() != DiagnosisMode.DETAILED) {
-            return false;
+            return new RegistryAddressValidation(false, false);
         }
         RegistryResult registryResult = registryResultRepository
                 .findTopByAnalysisIdOrderByParsedAtDesc(analysisId)
                 .orElse(null);
         if (registryResult == null
                 || registryResult.getParseStatus() != ParseStatus.SUCCESS) {
-            return false;
+            return new RegistryAddressValidation(false, false);
         }
-        ensureRegistryAddressMatched(registryAddressMatchService.match(
+        RegistryAddressMatchStatus status = registryAddressMatchService.match(
                 address,
                 dongName,
                 hoName,
                 propertySnapshot,
                 registryResult.getRawAddress()
-        ));
-        return true;
+        );
+        ensureRegistryAddressMatched(status, reviewConfirmed);
+        return new RegistryAddressValidation(
+                true,
+                status == RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED
+        );
     }
 
     private void ensureRegistryAddressMatched(
-            RegistryAddressMatchStatus status
+            RegistryAddressMatchStatus status,
+            boolean reviewConfirmed
     ) {
-        if (status == RegistryAddressMatchStatus.MATCH) {
+        if (status == RegistryAddressMatchStatus.MATCH
+                || status == RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED
+                && reviewConfirmed) {
             return;
         }
         if (status == RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED) {
@@ -455,6 +474,12 @@ public class DiagnosisService {
         );
     }
 
+    private record RegistryAddressValidation(
+            boolean registryReady,
+            boolean reviewConfirmed
+    ) {
+    }
+
     private RegistryResult latestSuccessfulRegistry(Long analysisId) {
         RegistryResult result = registryResultRepository
                 .findTopByAnalysisIdOrderByParsedAtDesc(analysisId)
@@ -473,17 +498,54 @@ public class DiagnosisService {
         return result;
     }
 
-    private RegistrySummaryResponse findRegistrySummary(Long analysisId) {
-        return registryResultRepository
-                .findTopByAnalysisIdOrderByParsedAtDesc(analysisId)
-                .map(registryResult -> RegistrySummaryResponse.from(
-                        registryResult,
-                        registryRightRepository
-                                .findByRegistryResultRegistryResultIdOrderByRightIdAsc(
-                                        registryResult.getRegistryResultId()
-                                )
-                ))
+    private RegistryReportData findRegistryReportData(Diagnosis diagnosis) {
+        RegistryResult registryResult = registryResultRepository
+                .findTopByAnalysisIdOrderByParsedAtDesc(
+                        diagnosis.getAnalysisId()
+                )
                 .orElse(null);
+        if (registryResult == null) {
+            return new RegistryReportData(null, null);
+        }
+
+        Long registryResultId = registryResult.getRegistryResultId();
+        List<RegistryRight> rights = registryRightRepository
+                .findByRegistryResultRegistryResultIdOrderByRightIdAsc(
+                        registryResultId
+                );
+        List<RegistryOwner> owners = registryOwnerRepository
+                .findByRegistryResultRegistryResultIdOrderByRegistryOwnerIdAsc(
+                        registryResultId
+                );
+        List<LandlordWatchlistCheck> checks = watchlistCheckRepository
+                .findByRegistryResultRegistryResultIdOrderByCheckIdAsc(
+                        registryResultId
+                );
+        RegistryAddressMatchStatus addressMatchStatus =
+                registryAddressMatchService.match(
+                        diagnosis.getAddress(),
+                        diagnosis.getDongName(),
+                        diagnosis.getHoName(),
+                        readPropertySnapshot(diagnosis.getPropertySnapshot()),
+                        registryResult.getRawAddress()
+                );
+        return new RegistryReportData(
+                RegistrySummaryResponse.from(registryResult, rights),
+                RegistryVerificationResponse.from(
+                        diagnosis,
+                        registryResult,
+                        rights,
+                        owners,
+                        checks,
+                        addressMatchStatus
+                )
+        );
+    }
+
+    private record RegistryReportData(
+            RegistrySummaryResponse summary,
+            RegistryVerificationResponse verification
+    ) {
     }
 
     private String writePropertySnapshot(Map<String, Object> snapshot) {

@@ -8,6 +8,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DiagnosisLifecycleTest {
 
@@ -26,7 +28,8 @@ class DiagnosisLifecycleTest {
                 "서울특별시 강서구 화곡동 359-20",
                 null,
                 null,
-                null
+                null,
+                false
         );
         diagnosis.markAddressConfirmed(false);
         assertEquals(DiagnosisStatus.CREATED, diagnosis.getStatus());
@@ -51,6 +54,26 @@ class DiagnosisLifecycleTest {
         assertEquals(DiagnosisStatus.READY, registryFirst.getStatus());
     }
 
+    @Test
+    void registryUploadResetsPartialAddressConfirmation() {
+        Diagnosis diagnosis = Diagnosis.create(
+                null,
+                DiagnosisMode.DETAILED,
+                null,
+                null
+        );
+        diagnosis.updateAddress(
+                "서울특별시 중구 세종대로 110",
+                null,
+                null,
+                null,
+                true
+        );
+        assertTrue(diagnosis.isRegistryAddressReviewConfirmed());
+        diagnosis.resetRegistryAddressReviewConfirmation();
+        assertFalse(diagnosis.isRegistryAddressReviewConfirmed());
+    }
+
     private void fillDetails(Diagnosis diagnosis) {
         diagnosis.updateDetails(
                 "서울특별시 중구 세종대로 110",
@@ -62,7 +85,8 @@ class DiagnosisLifecycleTest {
                 new BigDecimal("59.83"),
                 null,
                 null,
-                null
+                null,
+                false
         );
     }
 }

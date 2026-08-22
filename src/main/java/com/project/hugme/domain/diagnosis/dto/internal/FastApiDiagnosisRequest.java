@@ -1,10 +1,10 @@
 package com.project.hugme.domain.diagnosis.dto.internal;
 
 import com.project.hugme.domain.diagnosis.entity.Diagnosis;
+import com.project.hugme.domain.diagnosis.service.RegistryVerification;
 import com.project.hugme.infra.ocr.entity.LandlordWatchlistCheck;
-import com.project.hugme.infra.ocr.entity.RegistryResult;
 import com.project.hugme.infra.ocr.entity.RegistryOwner;
-import com.project.hugme.infra.ocr.enums.CheckStatus;
+import com.project.hugme.infra.ocr.entity.RegistryResult;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -86,7 +86,8 @@ public record FastApiDiagnosisRequest(
                 String landlordName,
                 List<RegistryOwner> owners
         ) {
-            WatchlistSummary watchlist = WatchlistSummary.from(checks);
+            RegistryVerification.WatchlistSummary watchlist =
+                    RegistryVerification.summarizeWatchlist(checks);
 
             return new RegistryRisk(
                     result.getParseStatus().name(),
@@ -99,70 +100,12 @@ public record FastApiDiagnosisRequest(
                     result.getTrustRegistration().name(),
                     result.getHasActiveJeonseRight().name(),
                     result.getHasActiveLeaseholdRegistration().name(),
-                    ownerMatch(landlordName, owners),
+                    RegistryVerification.ownerMatchStatus(landlordName, owners),
                     landlordName,
-                    ownerNames(owners),
+                    RegistryVerification.ownerNames(owners),
                     watchlist.status(),
                     watchlist.matched()
             );
-        }
-
-        private static List<String> ownerNames(List<RegistryOwner> owners) {
-            return owners.stream()
-                    .map(RegistryOwner::getName)
-                    .filter(name -> name != null && !name.isBlank())
-                    .map(String::trim)
-                    .distinct()
-                    .toList();
-        }
-
-        private static String ownerMatch(
-                String landlordName,
-                List<RegistryOwner> owners
-        ) {
-            String expected = normalizeName(landlordName);
-            if (expected == null || owners.isEmpty()) {
-                return "UNKNOWN";
-            }
-
-            return owners.stream()
-                    .map(RegistryOwner::getName)
-                    .map(RegistryRisk::normalizeName)
-                    .anyMatch(expected::equals)
-                    ? "TRUE"
-                    : "FALSE";
-        }
-
-        private static String normalizeName(String value) {
-            if (value == null || value.isBlank()) {
-                return null;
-            }
-            return value.replaceAll("[^가-힣A-Za-z0-9]", "")
-                    .toLowerCase();
-        }
-    }
-
-    private record WatchlistSummary(String status, Boolean matched) {
-        private static WatchlistSummary from(
-                List<LandlordWatchlistCheck> checks
-        ) {
-            if (checks.stream().anyMatch(check ->
-                    check.getCheckStatus() == CheckStatus.CHECKED
-                            && Boolean.TRUE.equals(check.getMatched()))) {
-                return new WatchlistSummary("CHECKED", true);
-            }
-
-            if (!checks.isEmpty() && checks.stream().allMatch(check ->
-                    check.getCheckStatus() == CheckStatus.CHECKED)) {
-                return new WatchlistSummary("CHECKED", false);
-            }
-
-            if (checks.stream().anyMatch(check ->
-                    check.getCheckStatus() == CheckStatus.ERROR)) {
-                return new WatchlistSummary("ERROR", null);
-            }
-
-            return new WatchlistSummary("NOT_CHECKED", null);
         }
     }
 }

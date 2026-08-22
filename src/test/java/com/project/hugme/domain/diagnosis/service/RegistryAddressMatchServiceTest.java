@@ -68,6 +68,21 @@ class RegistryAddressMatchServiceTest {
     }
 
     @Test
+    void requiresReviewWhenConfirmedUnitWasOmitted() {
+        RegistryAddressMatchStatus status = service.match(
+                "경기도 수원시 팔달구 덕영대로 691",
+                null,
+                null,
+                snapshot,
+                "[집합건물] 경기도 수원시 팔달구 화서동 250-4 화서역 아파트 제107동 제13층 제1301호"
+        );
+        assertEquals(
+                RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED,
+                status
+        );
+    }
+
+    @Test
     void rejectsDifferentProperty() {
         RegistryAddressMatchStatus status = service.match(
                 "경기도 수원시 팔달구 덕영대로 691",
