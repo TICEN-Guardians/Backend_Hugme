@@ -33,6 +33,20 @@ class FastApiDiagnosisResponseTest {
                     ],
                     "warnings": []
                   },
+                  "depositRecommendation": {
+                    "recommendedLimit": 189000000,
+                    "currentDeposit": 200000000,
+                    "reductionRequired": 11000000,
+                    "withinRecommendedLimit": false,
+                    "targetScoreMax": 25,
+                    "targetGrade": "LOW",
+                    "scoreAtLimit": 14,
+                    "calculationBasis": "PRICE_MARKET_ONLY",
+                    "registryReflected": false,
+                    "provisional": true,
+                    "adjustmentCanResolveFinalRisk": false,
+                    "unresolvedRiskReasons": ["OWNER_MISMATCH"]
+                  },
                   "risk": {
                     "score": 80,
                     "baseScore": 23,
@@ -63,6 +77,12 @@ class FastApiDiagnosisResponseTest {
                 FastApiDiagnosisResponse.class
         );
 
+        assertThat(response.depositRecommendation().recommendedLimit())
+                .isEqualTo(189000000L);
+        assertThat(response.depositRecommendation().targetGrade())
+                .isEqualTo("LOW");
+        assertThat(response.depositRecommendation().unresolvedRiskReasons())
+                .containsExactly("OWNER_MISMATCH");
         assertThat(response.risk().score()).isEqualTo(80);
         assertThat(response.risk().baseScore()).isEqualTo(23);
         assertThat(response.risk().breakdown().rightsAdjustment()).isEqualTo(57);

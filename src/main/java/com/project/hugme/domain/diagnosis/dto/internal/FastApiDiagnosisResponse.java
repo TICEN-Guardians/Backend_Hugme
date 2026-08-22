@@ -14,6 +14,7 @@ public record FastApiDiagnosisResponse(
         MarketComparables marketComparables,
         Valuation valuation,
         Indicators indicators,
+        DepositRecommendation depositRecommendation,
         Risk risk,
         List<String> forcedWarnings,
         List<String> missingChecks,
@@ -72,6 +73,22 @@ public record FastApiDiagnosisResponse(
             Long depositShortfall,
             Long remainingCollateralCapacity,
             Map<String, Double> priceDropScenarios
+    ) {
+    }
+
+    public record DepositRecommendation(
+            Long recommendedLimit,
+            Long currentDeposit,
+            Long reductionRequired,
+            Boolean withinRecommendedLimit,
+            Integer targetScoreMax,
+            String targetGrade,
+            Integer scoreAtLimit,
+            String calculationBasis,
+            Boolean registryReflected,
+            Boolean provisional,
+            Boolean adjustmentCanResolveFinalRisk,
+            List<String> unresolvedRiskReasons
     ) {
     }
 
