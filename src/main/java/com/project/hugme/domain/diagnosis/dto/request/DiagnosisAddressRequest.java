@@ -9,6 +9,7 @@ public record DiagnosisAddressRequest(
         @NotBlank @Size(max = 500) String address,
         @Size(min = 1, max = 100) String dongName,
         @Size(max = 100) String hoName,
-        Map<String, Object> propertySnapshot
+        Map<String, Object> propertySnapshot,
+        boolean registryAddressReviewConfirmed
 ) {
 }

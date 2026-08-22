@@ -91,6 +91,9 @@ public class Diagnosis {
     @Column(name = "property_snapshot", columnDefinition = "TEXT")
     private String propertySnapshot;
 
+    @Column(name = "registry_address_review_confirmed", nullable = false)
+    private boolean registryAddressReviewConfirmed;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     private DiagnosisStatus status;
@@ -122,12 +125,14 @@ public class Diagnosis {
             String address,
             String dongName,
             String hoName,
-            String propertySnapshot
+            String propertySnapshot,
+            boolean registryAddressReviewConfirmed
     ) {
         this.address = address;
         this.dongName = dongName;
         this.hoName = hoName;
         this.propertySnapshot = propertySnapshot;
+        this.registryAddressReviewConfirmed = registryAddressReviewConfirmed;
     }
 
     public void markAddressConfirmed(boolean registryReady) {
@@ -150,7 +155,8 @@ public class Diagnosis {
             BigDecimal exclusiveArea,
             Integer floor,
             String landlordName,
-            String propertySnapshot
+            String propertySnapshot,
+            boolean registryAddressReviewConfirmed
     ) {
         this.address = address;
         this.dongName = dongName;
@@ -162,12 +168,17 @@ public class Diagnosis {
         this.floor = floor;
         this.landlordName = landlordName;
         this.propertySnapshot = propertySnapshot;
+        this.registryAddressReviewConfirmed = registryAddressReviewConfirmed;
     }
 
     public void markDetailsReady(boolean registryReady) {
         status = mode == DiagnosisMode.QUICK || registryReady
                 ? DiagnosisStatus.READY
                 : DiagnosisStatus.DETAILS_READY;
+    }
+
+    public void resetRegistryAddressReviewConfirmation() {
+        registryAddressReviewConfirmed = false;
     }
 
     public void markRegistryProcessed(boolean successful) {

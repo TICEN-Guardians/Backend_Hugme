@@ -95,7 +95,9 @@ public class RegistryAddressMatchService {
     ) {
         String normalizedExpected = normalizeUnit(expected);
         if (normalizedExpected == null) {
-            return RegistryAddressMatchStatus.MATCH;
+            return actual.isEmpty()
+                    ? RegistryAddressMatchStatus.MATCH
+                    : RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED;
         }
         if (actual.isEmpty()) {
             return RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED;

@@ -20,6 +20,7 @@ public record DiagnosisDetailsRequest(
         @DecimalMin("0.01") BigDecimal exclusiveArea,
         Integer floor,
         @Size(max = 100) String landlordName,
-        Map<String, Object> propertySnapshot
+        Map<String, Object> propertySnapshot,
+        boolean registryAddressReviewConfirmed
 ) {
 }

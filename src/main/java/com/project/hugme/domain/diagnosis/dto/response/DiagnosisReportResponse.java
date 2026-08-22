@@ -9,13 +9,15 @@ import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisResponse;
  */
 public record DiagnosisReportResponse(
         @JsonUnwrapped FastApiDiagnosisResponse diagnosis,
-        RegistrySummaryResponse registry
+        RegistrySummaryResponse registry,
+        RegistryVerificationResponse registryVerification
 ) {
 
     public static DiagnosisReportResponse of(
             FastApiDiagnosisResponse diagnosis,
-            RegistrySummaryResponse registry
+            RegistrySummaryResponse registry,
+            RegistryVerificationResponse registryVerification
     ) {
-        return new DiagnosisReportResponse(diagnosis, registry);
+        return new DiagnosisReportResponse(diagnosis, registry, registryVerification);
     }
 }

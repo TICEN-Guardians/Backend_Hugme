@@ -1,6 +1,7 @@
 package com.project.hugme.domain.diagnosis.dto.internal;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +11,7 @@ public record FastApiDiagnosisResponse(
         String status,
         Instant analyzedAt,
         Property property,
+        MarketComparables marketComparables,
         Valuation valuation,
         Indicators indicators,
         Risk risk,
@@ -32,6 +34,34 @@ public record FastApiDiagnosisResponse(
             Long estimatedLeasePrice
     ) {
     }
+
+    public record MarketComparables(
+            String status,
+            String source,
+            String scope,
+            Integer sampleCount,
+            LocalDate periodStart,
+            LocalDate periodEnd,
+            Double areaMin,
+            Double areaMax,
+            Long minimum,
+            Long percentile25,
+            Long median,
+            Long percentile75,
+            Long maximum,
+            Double userDepositPercentile,
+            List<ComparableBin> bins,
+            List<String> warnings
+    ) {
+    }
+
+    public record ComparableBin(
+            Long lowerBound,
+            Long upperBound,
+            Integer count
+    ) {
+    }
+
 
     public record Indicators(
             Double leaseToSaleRate,
