@@ -49,17 +49,28 @@ this.accessTokenExpiration=accessTokenExpiration;
 
     }
     //refreshtoken 생성
-    public String createRefreshToken(CustomUserDetails userDetails) {
+    public String createRefreshToken(
+            CustomUserDetails userDetails,
+            boolean rememberMe
+    ) {
         Instant issuedAt = Instant.now();
         Instant expiration = issuedAt.plusMillis(refreshTokenExpiration);
 
         return Jwts.builder()
                 .subject(String.valueOf(userDetails.getUserId()))
                 .claim("tokenType", "REFRESH")
+                .claim("rememberMe", rememberMe)
                 .issuedAt(Date.from(issuedAt))
                 .expiration(Date.from(expiration))
                 .signWith(secretKey)
                 .compact();
+    }
+
+    public boolean isRememberMe(String token) {
+        Claims claims = parseClaims(token);
+        Boolean rememberMe = claims.get("rememberMe", Boolean.class);
+
+        return Boolean.TRUE.equals(rememberMe);
     }
     //refreshtoken 새 만료시간 발급
     public Instant getRefreshTokenExpiresAt() {

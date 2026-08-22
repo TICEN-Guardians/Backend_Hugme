@@ -26,7 +26,28 @@ import java.time.Duration;
 )
 public class AuthController {
 
+    private static final Duration REMEMBER_ME_MAX_AGE =
+            Duration.ofDays(14);
+
     private final AuthService authService;
+
+    private ResponseCookie createRefreshTokenCookie(
+            String refreshToken,
+            boolean rememberMe
+    ) {
+        ResponseCookie.ResponseCookieBuilder builder =
+                ResponseCookie
+                        .from("refreshToken", refreshToken)
+                        .httpOnly(true)
+                        .secure(true)
+                        .path("/api/auth");
+
+        if (rememberMe) {
+            builder.maxAge(REMEMBER_ME_MAX_AGE);
+        }
+
+        return builder.build();
+    }
 
     @SecurityRequirements
     @Operation(
@@ -88,13 +109,11 @@ public class AuthController {
     ) {
         TokenPair tokenPair = authService.login(request);
 
-        ResponseCookie cookie = ResponseCookie
-                .from("refreshToken", tokenPair.refreshToken())
-                .httpOnly(true)
-                .secure(true)    //http 기준- false
-                .path("/api/auth")
-                .maxAge(Duration.ofDays(7))
-                .build();
+        ResponseCookie cookie =
+                createRefreshTokenCookie(
+                        tokenPair.refreshToken(),
+                        tokenPair.rememberMe()
+                );
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
@@ -114,13 +133,11 @@ public class AuthController {
         TokenPair tokenPair =
                 authService.reissue(refreshToken);
 
-        ResponseCookie cookie = ResponseCookie
-                .from("refreshToken", tokenPair.refreshToken())
-                .httpOnly(true)
-                .secure(true)   // 로컬 HTTP
-                .path("/api/auth")
-                .maxAge(Duration.ofDays(7))
-                .build();
+        ResponseCookie cookie =
+                createRefreshTokenCookie(
+                        tokenPair.refreshToken(),
+                        tokenPair.rememberMe()
+                );
 
         return ResponseEntity.ok()
                 .header(

@@ -121,8 +121,14 @@ public class AuthService {
 
         String accessToken = jwtTokenProvider.createAccessToken(userDetails);
 
+        boolean rememberMe =
+                Boolean.TRUE.equals(request.rememberMe());
+
         String refreshToken =
-                jwtTokenProvider.createRefreshToken(userDetails);
+                jwtTokenProvider.createRefreshToken(
+                        userDetails,
+                        rememberMe
+                );
 
         Instant expiresAt =
                 jwtTokenProvider.getRefreshTokenExpiresAt();
@@ -130,7 +136,11 @@ public class AuthService {
 
         saveRefreshToken(user, refreshToken, expiresAt);
 
-        return new TokenPair(accessToken, refreshToken);
+        return new TokenPair(
+                accessToken,
+                refreshToken,
+                rememberMe
+        );
 
     }
 
@@ -162,6 +172,9 @@ public class AuthService {
     ) {
         // 1. 서명, 만료시간, 토큰 타입 검증
         jwtTokenProvider.validateRefreshToken(requestToken);
+
+        boolean rememberMe =
+                jwtTokenProvider.isRememberMe(requestToken);
 
         // 2. Refresh Token에서 사용자 ID 추출
         Long userId = jwtTokenProvider.getUserId(requestToken);
@@ -211,11 +224,19 @@ public class AuthService {
 
         String newAccessToken = jwtTokenProvider.createAccessToken(userDetails);
 
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(userDetails);
+        String newRefreshToken =
+                jwtTokenProvider.createRefreshToken(
+                        userDetails,
+                        rememberMe
+                );
 
         savedToken.update(newRefreshToken, jwtTokenProvider.getRefreshTokenExpiresAt());
 
-        return new TokenPair(newAccessToken, newRefreshToken);
+        return new TokenPair(
+                newAccessToken,
+                newRefreshToken,
+                rememberMe
+        );
 
     }
 
