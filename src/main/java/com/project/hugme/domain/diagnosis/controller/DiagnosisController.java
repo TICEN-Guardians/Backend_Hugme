@@ -5,10 +5,12 @@ import com.project.hugme.domain.diagnosis.dto.request.DiagnosisAddressRequest;
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisCreateRequest;
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisDetailsRequest;
 import com.project.hugme.domain.diagnosis.dto.response.DiagnosisCreateResponse;
+import com.project.hugme.domain.diagnosis.dto.response.DiagnosisListResponse;
 import com.project.hugme.domain.diagnosis.dto.response.DiagnosisReportResponse;
 import com.project.hugme.domain.diagnosis.dto.response.RegistryOcrResponse;
 import com.project.hugme.domain.diagnosis.service.DiagnosisService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 import java.util.List;
 
@@ -99,5 +103,25 @@ public class DiagnosisController {
         return ResponseEntity.ok(
                 diagnosisService.getDiagnosisResult(userId, analysisId, null)
         );
+    }
+
+    @GetMapping("/completed")
+    @Operation(
+            summary = "저장된 진단 목록 조회",
+            description = "로그인 사용자의 완료된 전세 위험도 진단을 최근 업데이트 순으로 조회합니다."
+    )
+    public ResponseEntity<List<DiagnosisListResponse>>
+    getCompletedDiagnoses(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal(expression = "userId")
+            Long userId
+    ) {
+        List<DiagnosisListResponse> response =
+                diagnosisService
+                        .getCompletedDiagnoses(
+                                userId
+                        );
+
+        return ResponseEntity.ok(response);
     }
 }

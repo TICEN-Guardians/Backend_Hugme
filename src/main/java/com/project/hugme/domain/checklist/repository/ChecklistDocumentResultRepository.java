@@ -14,6 +14,12 @@ public interface ChecklistDocumentResultRepository extends JpaRepository<
         ChecklistDocumentResultId
         > {
 
+    boolean existsByApplicationApplicationIdAndApplicationUserUserIdAndDocumentDocumentId(
+            Long applicationId,
+            Long userId,
+            Long documentId
+    );
+
     @Modifying
     @Query("""
                 DELETE FROM ChecklistDocumentResult result

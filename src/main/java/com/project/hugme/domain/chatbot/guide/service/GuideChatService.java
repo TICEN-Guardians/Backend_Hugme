@@ -3,6 +3,7 @@ package com.project.hugme.domain.chatbot.guide.service;
 import com.project.hugme.domain.chatbot.FeatureType;
 import com.project.hugme.domain.chatbot.guide.dto.ChatRequest;
 import com.project.hugme.domain.chatbot.guide.dto.ChatResponse;
+import com.project.hugme.domain.chatbot.guide.dto.EntryQuestion;
 import com.project.hugme.domain.chatbot.guide.dto.RedirectDto;
 import com.project.hugme.domain.chatbot.guide.dto.SourceDto;
 import com.project.hugme.domain.chatbot.guide.entity.GuideChatHistory;
@@ -14,11 +15,7 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.document.Document;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.UUID;
@@ -36,9 +33,11 @@ public class GuideChatService {
     private final GuideChatHistoryRepository guideChatHistoryRepository;
     private final UserRepository userRepository;
     private final ChatMemory chatMemory;
+    private final GuideSessionService guideSessionService;
 
-    public Flux<ServerSentEvent<Object>> handle(Long userId, ChatRequest request) {
-        String sessionId = resolveSessionId(userId, request);
+    public ChatResponse handle(Long userId, ChatRequest request) {
+        String sessionId = resolveSessionId(request);
+        guideSessionService.rehydrateMemoryIfNeeded(userId, sessionId);
 
         var route = intentClassificationService.route(request.message(), sessionId);
 
@@ -51,7 +50,7 @@ public class GuideChatService {
                 );
                 saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
                 rememberTurn(sessionId, request.message(), response.answer());
-                return streamFinalAnswer(response);
+                return response;
             }
             FeatureType feature = route.featureType();
             String answer = "해당 요청은 " + feature.label() + " 기능이에요. " + feature.label() + "으로 이동하시겠어요?";
@@ -61,14 +60,34 @@ public class GuideChatService {
             );
             saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
             rememberTurn(sessionId, request.message(), response.answer());
-            return streamFinalAnswer(response);
+            return response;
+        }
+
+        if ("suggestion_request".equals(route.category())) {
+            List<String> suggestions = suggestedQuestionService.suggestFromHistory(chatMemory.get(sessionId));
+            boolean hasContext = !suggestions.isEmpty();
+            List<String> finalSuggestions = hasContext
+                    ? suggestions
+                    : EntryQuestion.defaults().stream()
+                            .flatMap(entry -> entry.questions().stream())
+                            .limit(4)
+                            .toList();
+            String answer = hasContext
+                    ? "이런 질문은 어떠세요?"
+                    : "아직 나눈 대화가 없어서, 자주 묻는 질문을 추천해드릴게요.";
+            ChatResponse response = new ChatResponse(
+                    sessionId, answer, route.category(), List.of(), finalSuggestions, null
+            );
+            saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
+            rememberTurn(sessionId, request.message(), response.answer());
+            return response;
         }
 
         if ("meta".equals(route.category())) {
             String answer = metaAnswerService.generate(sessionId, request.message());
             ChatResponse response = new ChatResponse(sessionId, answer, route.category(), List.of(), List.of(), null);
             saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
-            return streamFinalAnswer(response);
+            return response;
         }
 
         if ("off_topic".equals(route.category())) {
@@ -79,7 +98,7 @@ public class GuideChatService {
             );
             saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
             rememberTurn(sessionId, request.message(), response.answer());
-            return streamFinalAnswer(response);
+            return response;
         }
 
         List<Document> results = hybridSearchService.search(route.rewrittenQuery(), route.category());
@@ -91,32 +110,13 @@ public class GuideChatService {
                 ))
                 .toList();
 
-        StringBuilder answerBuilder = new StringBuilder();
-
-        Flux<ServerSentEvent<Object>> tokenEvents = answerGenerationService
-                .generateStream(sessionId, request.message(), results)
-                .doOnNext(answerBuilder::append)
-                .map(chunk -> ServerSentEvent.builder((Object) chunk).event("token").build());
-
-        Mono<ServerSentEvent<Object>> doneEvent = Mono.fromCallable(() -> {
-                    String answer = answerBuilder.toString();
-                    List<String> suggestedQuestions = suggestedQuestionService.suggest(request.message(), answer);
-                    ChatResponse response = new ChatResponse(
-                            sessionId, answer, route.category(), sources, suggestedQuestions, null
-                    );
-                    saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
-                    return ServerSentEvent.builder((Object) response).event("done").build();
-                })
-                .subscribeOn(Schedulers.boundedElastic());
-
-        return tokenEvents.concatWith(doneEvent);
-    }
-
-    private Flux<ServerSentEvent<Object>> streamFinalAnswer(ChatResponse response) {
-        return Flux.just(
-                ServerSentEvent.builder((Object) response.answer()).event("token").build(),
-                ServerSentEvent.builder((Object) response).event("done").build()
+        String answer = answerGenerationService.generate(sessionId, request.message(), results);
+        List<String> suggestedQuestions = suggestedQuestionService.suggest(request.message(), answer, results);
+        ChatResponse response = new ChatResponse(
+                sessionId, answer, route.category(), sources, suggestedQuestions, null
         );
+        saveHistoryIfLoggedIn(userId, sessionId, request.message(), response);
+        return response;
     }
 
     // feature/off_topic 답변은 chatClient를 거치지 않아 MessageChatMemoryAdvisor가 자동으로 기록해주지 않으므로 직접 기록한다.
@@ -140,12 +140,10 @@ public class GuideChatService {
         guideChatHistoryRepository.save(GuideChatHistory.create(
                 user, sessionId, response.category(), question, response.answer(), sourcesJoined
         ));
+        guideSessionService.pruneOldSessions(userId);
     }
 
-    private String resolveSessionId(Long userId, ChatRequest request) {
-        if (userId != null) {
-            return "user-" + userId;  // 로그인 사용자는 항상 고정 세션
-        }
-        return request.sessionId() != null ? request.sessionId() : UUID.randomUUID().toString();  // 비로그인은 기존 방식 유지
+    private String resolveSessionId(ChatRequest request) {
+        return request.sessionId() != null ? request.sessionId() : UUID.randomUUID().toString();
     }
 }

@@ -18,13 +18,7 @@ import com.project.hugme.domain.diagnosis.dto.request.DiagnosisCreateRequest;
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisDetailsRequest;
 import com.project.hugme.domain.diagnosis.dto.request.PropertyResolveRequest;
 import com.project.hugme.domain.diagnosis.dto.request.PropertySearchRequest;
-import com.project.hugme.domain.diagnosis.dto.response.AddressSuggestionResponse;
-import com.project.hugme.domain.diagnosis.dto.response.DiagnosisCreateResponse;
-import com.project.hugme.domain.diagnosis.dto.response.DiagnosisReportResponse;
-import com.project.hugme.domain.diagnosis.dto.response.PropertyResolveResponse;
-import com.project.hugme.domain.diagnosis.dto.response.PropertySearchResponse;
-import com.project.hugme.domain.diagnosis.dto.response.RegistryOcrResponse;
-import com.project.hugme.domain.diagnosis.dto.response.RegistrySummaryResponse;
+import com.project.hugme.domain.diagnosis.dto.response.*;
 import com.project.hugme.domain.diagnosis.entity.Diagnosis;
 import com.project.hugme.domain.diagnosis.entity.DiagnosisResult;
 import com.project.hugme.domain.diagnosis.enums.DiagnosisMode;
@@ -55,6 +49,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -564,4 +559,28 @@ public class DiagnosisService {
     ) {
         return new DiagnosisException(status, code, message);
     }
+    public List<DiagnosisListResponse> getCompletedDiagnoses(
+            Long userId
+    ) {
+        List<Diagnosis> diagnoses =
+                diagnosisRepository
+                        .findAllByUserUserIdOrderByUpdatedAtDesc(
+                                userId
+                        );
+
+        List<DiagnosisListResponse> responses =
+                new ArrayList<>();
+
+        for (Diagnosis diagnosis : diagnoses) {
+            DiagnosisListResponse response =
+                    DiagnosisListResponse.from(
+                            diagnosis
+                    );
+
+            responses.add(response);
+        }
+
+        return responses;
+    }
+
 }

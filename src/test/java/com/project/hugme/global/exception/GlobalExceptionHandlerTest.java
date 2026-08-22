@@ -127,3 +127,4 @@ class GlobalExceptionHandlerTest {
                 .isEqualTo("AI_SERVICE_TIMEOUT");
     }
 }
+
