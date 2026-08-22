@@ -145,7 +145,7 @@ public class ApplicationChecklistService {
 
         applicationInfo.updateAndConfirm(
                 housingType,
-                "모의테스트용 주소",
+                "경기도 과천시 과천대로 12 길 117",
                 ContractType.NEW,
                 PartyType.PERSON,
                 PartyType.PERSON,
