@@ -9,6 +9,8 @@ import java.util.List;
 
 public record FastApiPropertySearchResponse(
         String normalizedAddress,
+        String roadAddress,
+        String jibunAddress,
         String buildingName,
         List<FastApiPropertyCandidateResponse> candidates,
         List<FastApiAddressCandidateResponse> addressCandidates
@@ -31,6 +33,8 @@ public record FastApiPropertySearchResponse(
 
         return new PropertySearchResponse(
                 normalizedAddress,
+                roadAddress,
+                jibunAddress,
                 buildingName,
                 responses,
                 addresses

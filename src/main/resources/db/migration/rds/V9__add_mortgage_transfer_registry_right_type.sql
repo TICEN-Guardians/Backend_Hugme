@@ -5,25 +5,25 @@
 -- 있으므로 ALTER TABLE IF EXISTS를 사용한다. 기존 환경에서는 제약을 새 목록으로 교체한다.
 
 ALTER TABLE IF EXISTS registry_rights
-DROP CONSTRAINT IF EXISTS registry_rights_right_type_check;
+    DROP CONSTRAINT IF EXISTS registry_rights_right_type_check;
 
 ALTER TABLE IF EXISTS registry_rights
     ADD CONSTRAINT registry_rights_right_type_check
     CHECK (
-    right_type IN (
-    'OWNERSHIP',
-    'MORTGAGE',
-    'MORTGAGE_AMEND',
-    'MORTGAGE_TRANSFER',
-    'SEIZURE',
-    'PROVISIONAL_SEIZURE',
-    'PROVISIONAL_DISPOSITION',
-    'PROVISIONAL_REGISTRATION',
-    'AUCTION',
-    'TRUST',
-    'JEONSE_RIGHT',
-    'LEASEHOLD_REGISTRATION',
-    'CANCELLATION',
-    'OTHER'
-    )
+        right_type IN (
+            'OWNERSHIP',
+            'MORTGAGE',
+            'MORTGAGE_AMEND',
+            'MORTGAGE_TRANSFER',
+            'SEIZURE',
+            'PROVISIONAL_SEIZURE',
+            'PROVISIONAL_DISPOSITION',
+            'PROVISIONAL_REGISTRATION',
+            'AUCTION',
+            'TRUST',
+            'JEONSE_RIGHT',
+            'LEASEHOLD_REGISTRATION',
+            'CANCELLATION',
+            'OTHER'
+        )
     );

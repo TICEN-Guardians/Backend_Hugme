@@ -1,6 +1,7 @@
 package com.project.hugme.domain.file.dto;
 
 import com.project.hugme.domain.file.entity.ApplicationDocumentUpload;
+import com.project.hugme.domain.file.entity.DocumentValidationStatus;
 
 import java.time.Instant;
 
@@ -11,6 +12,10 @@ public record FileUploadResponse(
         String userFileName,
         String mimeType,
         Long fileSize,
+        DocumentValidationStatus validationStatus,
+        String detectedDocumentType,
+        Double validationConfidence,
+        String validationMessage,
         Instant createdAt
 ) {
 
@@ -24,6 +29,10 @@ public record FileUploadResponse(
                 upload.getUserFileName(),
                 upload.getMimeType(),
                 upload.getFileSize(),
+                upload.getValidationStatus(),
+                upload.getDetectedDocumentType(),
+                upload.getValidationConfidence(),
+                upload.getValidationMessage(),
                 upload.getCreatedAt()
         );
     }
