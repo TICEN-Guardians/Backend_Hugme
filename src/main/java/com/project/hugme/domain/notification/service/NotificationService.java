@@ -11,9 +11,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
+
+    private static final String HUGME_URL =
+            "https://hugm3.com";
+
+    private static final DateTimeFormatter KOREAN_DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy년 M월 d일");
 
     private final ApplicationInfoRepository applicationInfoRepository;
 
@@ -147,6 +156,7 @@ public class NotificationService {
         String message =
                 createMessage(
                         productCode,
+                        dDayResult.applicationDeadline(),
                         dDayResult.dDay()
                 );
 
@@ -165,6 +175,7 @@ public class NotificationService {
 
     private String createMessage(
             ProductCode productCode,
+            LocalDate applicationDeadline,
             long dDay
     ) {
         String productName;
@@ -185,39 +196,70 @@ public class NotificationService {
             );
         }
 
+        String formattedDeadline =
+                applicationDeadline.format(
+                        KOREAN_DATE_FORMATTER
+                );
+
         if (dDay > 0) {
             return """
-                [HUGME]
+                🛡️ HUGME 보증 신청기한 안내
 
-                %s 신청기한까지
-                D-%d일 남았습니다.
+                [%s]
+                신청기한까지 D-%d일 남았습니다.
+
+                신청 마감일: %s
+
+                기한이 지나기 전에 필요한 서류를 미리 확인해 주세요.
+
+                HUGME 바로가기
+                %s
                 """.formatted(
                     productName,
-                    dDay
+                    dDay,
+                    formattedDeadline,
+                    HUGME_URL
             );
         }
 
         if (dDay == 0) {
             return """
-                [HUGME]
+                🛡️ HUGME 보증 신청기한 안내
 
-                오늘은 %s
-                신청기한 마지막 날입니다.
+                [%s]
+                오늘이 신청기한 마지막 날입니다.
+
+                신청 마감일: %s
+
+                접수 전에 필요한 서류와 신청 가능 시간을 꼭 확인해 주세요.
+
+                HUGME 바로가기
+                %s
                 """.formatted(
-                    productName
+                    productName,
+                    formattedDeadline,
+                    HUGME_URL
             );
         }
 
         return """
-            [HUGME]
+            🛡️ HUGME 보증 신청기한 안내
 
-            %s의 일반 신청기한이
-            %d일 지났습니다.
+            [%s]
+            일반 신청기한이 %d일 지났습니다.
 
-            정확한 가입 가능 여부는 HUG에 확인해 주세요.
+            신청 마감일: %s
+
+            계약 조건에 따라 신청 가능 여부가 달라질 수 있으니,
+            정확한 내용은 HUG 또는 관련 기관에 확인해 주세요.
+
+            HUGME 바로가기
+            %s
             """.formatted(
                 productName,
-                Math.abs(dDay)
+                Math.abs(dDay),
+                formattedDeadline,
+                HUGME_URL
         );
     }
 }

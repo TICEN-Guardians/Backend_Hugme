@@ -78,7 +78,7 @@ public class KakaoMessageClient {
         template.put("object_type", "text");
         template.put("text", message);
         template.put("link", link);
-        template.put("button_title", "HUGME 확인");
+        template.put("button_title", "HUGME 바로가기");
 
         try {
             return objectMapper.writeValueAsString(template);

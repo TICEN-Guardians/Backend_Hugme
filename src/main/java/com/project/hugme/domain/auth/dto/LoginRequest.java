@@ -9,5 +9,7 @@ public record LoginRequest(
         String email,
 
         @NotBlank(message="비밀번호는 필수입니다.")
-        String password) {
+        String password,
+
+        Boolean rememberMe) {
 }
