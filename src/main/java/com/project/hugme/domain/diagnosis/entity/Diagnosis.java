@@ -1,5 +1,6 @@
 package com.project.hugme.domain.diagnosis.entity;
 
+import com.project.hugme.domain.diagnosis.enums.DiagnosisMode;
 import com.project.hugme.domain.diagnosis.enums.DiagnosisStatus;
 import com.project.hugme.domain.diagnosis.enums.HousingType;
 import com.project.hugme.domain.user.entity.User;
@@ -28,15 +29,9 @@ import static lombok.AccessLevel.PROTECTED;
 
 @Getter
 @Entity
-@Table(
-        name = "diagnoses",
-        indexes = {
-                @Index(
-                        name = "idx_diagnoses_user_id",
-                        columnList = "user_id"
-                )
-        }
-)
+@Table(name = "diagnoses", indexes = {
+        @Index(name = "idx_diagnoses_user_id", columnList = "user_id")
+})
 @NoArgsConstructor(access = PROTECTED)
 public class Diagnosis {
 
@@ -45,11 +40,21 @@ public class Diagnosis {
     @Column(name = "analysis_id")
     private Long analysisId;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(name = "address", nullable = false, length = 500)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "diagnosis_mode", nullable = false, length = 20)
+    private DiagnosisMode mode;
+
+    @Column(name = "anonymous_access_token_hash", length = 64)
+    private String anonymousAccessTokenHash;
+
+    @Column(name = "anonymous_access_expires_at")
+    private Instant anonymousAccessExpiresAt;
+
+    @Column(name = "address", length = 500)
     private String address;
 
     @Column(name = "normalized_address", length = 500)
@@ -83,11 +88,6 @@ public class Diagnosis {
     @Column(name = "landlord_name", length = 100)
     private String landlordName;
 
-    /**
-     * properties/resolve 로 확보한 주소·건축물대장 정보(JSON 문자열).
-     * 분석 단계에서 그대로 AI에 넘겨 공공 API 재조회를 건너뛰게 한다.
-     * 성능을 위한 부가 정보라 값이 없어도 진단은 정상 동작한다.
-     */
     @Column(name = "property_snapshot", columnDefinition = "TEXT")
     private String propertySnapshot;
 
@@ -105,6 +105,42 @@ public class Diagnosis {
 
     public static Diagnosis create(
             User user,
+            DiagnosisMode mode,
+            String anonymousAccessTokenHash,
+            Instant anonymousAccessExpiresAt
+    ) {
+        Diagnosis diagnosis = new Diagnosis();
+        diagnosis.user = user;
+        diagnosis.mode = mode;
+        diagnosis.anonymousAccessTokenHash = anonymousAccessTokenHash;
+        diagnosis.anonymousAccessExpiresAt = anonymousAccessExpiresAt;
+        diagnosis.status = DiagnosisStatus.CREATED;
+        return diagnosis;
+    }
+
+    public void updateAddress(
+            String address,
+            String dongName,
+            String hoName,
+            String propertySnapshot
+    ) {
+        this.address = address;
+        this.dongName = dongName;
+        this.hoName = hoName;
+        this.propertySnapshot = propertySnapshot;
+    }
+
+    public void markAddressConfirmed(boolean registryReady) {
+        if (hasDetails()) {
+            markDetailsReady(registryReady);
+            return;
+        }
+        status = mode == DiagnosisMode.DETAILED && registryReady
+                ? DiagnosisStatus.REGISTRY_ANALYZED
+                : DiagnosisStatus.CREATED;
+    }
+
+    public void updateDetails(
             String address,
             String dongName,
             String hoName,
@@ -116,34 +152,7 @@ public class Diagnosis {
             String landlordName,
             String propertySnapshot
     ) {
-        Diagnosis diagnosis = new Diagnosis();
-
-        diagnosis.user = user;
-        diagnosis.address = address;
-        diagnosis.dongName = dongName;
-        diagnosis.hoName = hoName;
-        diagnosis.deposit = deposit;
-        diagnosis.contractDate = contractDate;
-        diagnosis.contractArea = contractArea;
-        diagnosis.exclusiveArea = exclusiveArea;
-        diagnosis.floor = floor;
-        diagnosis.landlordName = landlordName;
-        diagnosis.propertySnapshot = propertySnapshot;
-        diagnosis.status = DiagnosisStatus.CREATED;
-
-        return diagnosis;
-    }
-
-    public void updateDetails(
-            String dongName,
-            String hoName,
-            Long deposit,
-            LocalDate contractDate,
-            BigDecimal contractArea,
-            BigDecimal exclusiveArea,
-            Integer floor,
-            String landlordName
-    ) {
+        this.address = address;
         this.dongName = dongName;
         this.hoName = hoName;
         this.deposit = deposit;
@@ -152,7 +161,34 @@ public class Diagnosis {
         this.exclusiveArea = exclusiveArea;
         this.floor = floor;
         this.landlordName = landlordName;
+        this.propertySnapshot = propertySnapshot;
     }
+
+    public void markDetailsReady(boolean registryReady) {
+        status = mode == DiagnosisMode.QUICK || registryReady
+                ? DiagnosisStatus.READY
+                : DiagnosisStatus.DETAILS_READY;
+    }
+
+    public void markRegistryProcessed(boolean successful) {
+        if (!successful) {
+            status = hasDetails()
+                    ? DiagnosisStatus.DETAILS_READY
+                    : DiagnosisStatus.CREATED;
+            return;
+        }
+        status = hasDetails()
+                ? DiagnosisStatus.READY
+                : DiagnosisStatus.REGISTRY_ANALYZED;
+    }
+
+    public boolean hasDetails() {
+        return address != null && !address.isBlank()
+                && deposit != null
+                && contractDate != null
+                && (contractArea != null || exclusiveArea != null);
+    }
+
     public void markAnalyzing() {
         status = DiagnosisStatus.ANALYZING;
     }

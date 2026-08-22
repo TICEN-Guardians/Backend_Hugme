@@ -1,6 +1,8 @@
 package com.project.hugme.domain.diagnosis.controller;
 
+import com.project.hugme.domain.diagnosis.dto.request.AddressSuggestionRequest;
 import com.project.hugme.domain.diagnosis.dto.request.PropertyResolveRequest;
+import com.project.hugme.domain.diagnosis.dto.response.AddressSuggestionResponse;
 import com.project.hugme.domain.diagnosis.dto.response.PropertyResolveResponse;
 import com.project.hugme.domain.diagnosis.service.DiagnosisService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,7 +18,7 @@ import com.project.hugme.domain.diagnosis.dto.request.PropertySearchRequest;
 import com.project.hugme.domain.diagnosis.dto.response.PropertySearchResponse;
 
 @RestController
-@RequestMapping("/api/properties")
+@RequestMapping({"/api/properties", "/api/public/properties"})
 @RequiredArgsConstructor
 @Tag(
         name = "전세 위험도 진단",
@@ -25,6 +27,13 @@ import com.project.hugme.domain.diagnosis.dto.response.PropertySearchResponse;
 public class PropertyResolveController {
 
     private final DiagnosisService diagnosisService;
+
+    @PostMapping("/suggestions")
+    public ResponseEntity<AddressSuggestionResponse> suggestAddress(
+            @Valid @RequestBody AddressSuggestionRequest request
+    ) {
+        return ResponseEntity.ok(diagnosisService.suggestAddress(request));
+    }
 
     @PostMapping("/search")
     @Operation(

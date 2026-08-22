@@ -561,6 +561,8 @@ public class ApplicationChecklistService {
                                 ApplicationStatus.DONE
                         );
 
+
+
         List<CompletedApplicationResponse> responses =
                 new ArrayList<>();
 
