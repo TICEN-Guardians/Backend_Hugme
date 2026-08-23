@@ -7,16 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component
 public class RegistryAddressMatchService {
 
     private static final Pattern PARENTHESIZED = Pattern.compile("\\([^)]*\\)");
-    private static final Pattern DONG = Pattern.compile("제([가-힣A-Za-z0-9]+)동");
-    private static final Pattern HO = Pattern.compile("제([A-Za-z0-9]+)호");
     private static final Map<String, String> LETTER_NAMES = Map.ofEntries(
             Map.entry("A", "에이"),
             Map.entry("B", "비"),
@@ -31,7 +27,9 @@ public class RegistryAddressMatchService {
             String dongName,
             String hoName,
             Map<String, Object> propertySnapshot,
-            String registryAddress
+            String registryAddress,
+            String registryDongName,
+            String registryHoName
     ) {
         if (confirmedAddress == null || confirmedAddress.isBlank()) {
             return RegistryAddressMatchStatus.PENDING_ADDRESS_CONFIRMATION;
@@ -53,12 +51,12 @@ public class RegistryAddressMatchService {
 
         RegistryAddressMatchStatus dongStatus = matchDong(
                 dongName,
-                extractUnits(registryAddress, DONG),
-                registryAddress
+                registryDongName,
+                propertySnapshot
         );
         RegistryAddressMatchStatus hoStatus = matchUnit(
                 hoName,
-                extractUnits(registryAddress, HO)
+                registryHoName
         );
         if (dongStatus == RegistryAddressMatchStatus.MISMATCH
                 || hoStatus == RegistryAddressMatchStatus.MISMATCH) {
@@ -92,59 +90,68 @@ public class RegistryAddressMatchService {
 
     private RegistryAddressMatchStatus matchUnit(
             String expected,
-            Set<String> actual
+            String actual
     ) {
         String normalizedExpected = normalizeUnit(expected);
+        String normalizedActual = normalizeUnit(actual);
         if (normalizedExpected == null) {
-            return actual.isEmpty()
+            return normalizedActual == null
                     ? RegistryAddressMatchStatus.MATCH
                     : RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED;
         }
-        if (actual.isEmpty()) {
+        if (normalizedActual == null) {
             return RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED;
         }
-        return actual.contains(normalizedExpected)
+        return normalizedActual.equals(normalizedExpected)
                 ? RegistryAddressMatchStatus.MATCH
                 : RegistryAddressMatchStatus.MISMATCH;
     }
 
     private RegistryAddressMatchStatus matchDong(
             String expected,
-            Set<String> actual,
-            String registryAddress
+            String actual,
+            Map<String, Object> propertySnapshot
     ) {
         String normalizedExpected = normalizeUnit(expected);
+        String normalizedActual = normalizeUnit(actual);
         if (normalizedExpected == null) {
-            return actual.isEmpty()
+            return normalizedActual == null
                     ? RegistryAddressMatchStatus.MATCH
                     : RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED;
         }
-        if (actual.contains(normalizedExpected)) {
+        if (normalizedExpected.equals(normalizedActual)) {
             return RegistryAddressMatchStatus.MATCH;
         }
-        if (!actual.isEmpty()) {
+        if (normalizedActual != null) {
             return RegistryAddressMatchStatus.MISMATCH;
         }
 
-        boolean buildingNameMatches = !normalizedExpected.matches("\\d+")
-                && normalizeAddress(registryAddress).contains(
-                normalizedExpected.toLowerCase(Locale.ROOT)
-        );
-        return buildingNameMatches
+        return isBuildingNameSelection(expected, normalizedExpected, propertySnapshot)
                 ? RegistryAddressMatchStatus.MATCH
                 : RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED;
     }
 
-    private Set<String> extractUnits(String value, Pattern pattern) {
-        Matcher matcher = pattern.matcher(value);
-        Set<String> units = new java.util.HashSet<>();
-        while (matcher.find()) {
-            String normalized = normalizeUnit(matcher.group(1));
-            if (normalized != null) {
-                units.add(normalized);
+    private boolean isBuildingNameSelection(
+            String expected,
+            String normalizedExpected,
+            Map<String, Object> propertySnapshot
+    ) {
+        if (propertySnapshot != null) {
+            String normalizedBuildingName = normalizeUnit(
+                    valueOf(propertySnapshot.get("buildingName"))
+            );
+            if (normalizedExpected.equals(normalizedBuildingName)) {
+                return true;
             }
         }
-        return units;
+        String trimmed = expected == null ? "" : expected.trim();
+        return !trimmed.endsWith("동")
+                && !normalizedExpected.matches("\\d+")
+                && !normalizedExpected.matches("[A-Z]");
+    }
+
+    private String valueOf(Object value) {
+        return value == null ? null : String.valueOf(value);
     }
 
     private String normalizeAddress(String value) {

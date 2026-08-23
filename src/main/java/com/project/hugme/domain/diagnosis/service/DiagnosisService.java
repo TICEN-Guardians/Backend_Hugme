@@ -216,12 +216,15 @@ public class DiagnosisService {
         validateRegistryFiles(files);
         FastApiRegistryResponse response =
                 fastApiDiagnosisClient.uploadRegistry(analysisId, files);
+        FastApiRegistryResponse.OwnerInfo ownerInfo = response.ownerInfo();
         RegistryAddressMatchStatus addressMatchStatus = registryAddressMatchService.match(
                 diagnosis.getAddress(),
                 diagnosis.getDongName(),
                 diagnosis.getHoName(),
                 readPropertySnapshot(diagnosis.getPropertySnapshot()),
-                response.ownerInfo() == null ? null : response.ownerInfo().propertyAddress()
+                ownerInfo == null ? null : ownerInfo.propertyAddress(),
+                ownerInfo == null ? null : ownerInfo.dongName(),
+                ownerInfo == null ? null : ownerInfo.hoName()
         );
         boolean successful = response.ownerInfo() != null
                 && "SUCCESS".equalsIgnoreCase(response.ownerInfo().parseStatus())
@@ -257,7 +260,9 @@ public class DiagnosisService {
                             diagnosis.getDongName(),
                             diagnosis.getHoName(),
                             readPropertySnapshot(diagnosis.getPropertySnapshot()),
-                            registryResult.getRawAddress()
+                            registryResult.getRawAddress(),
+                            registryResult.getDongName(),
+                            registryResult.getHoName()
                     ),
                     diagnosis.isRegistryAddressReviewConfirmed()
             );
@@ -490,7 +495,9 @@ public class DiagnosisService {
                 dongName,
                 hoName,
                 propertySnapshot,
-                registryResult.getRawAddress()
+                registryResult.getRawAddress(),
+                registryResult.getDongName(),
+                registryResult.getHoName()
         );
         ensureRegistryAddressMatched(status, reviewConfirmed);
         return new RegistryAddressValidation(
@@ -582,7 +589,9 @@ public class DiagnosisService {
                         diagnosis.getDongName(),
                         diagnosis.getHoName(),
                         readPropertySnapshot(diagnosis.getPropertySnapshot()),
-                        registryResult.getRawAddress()
+                        registryResult.getRawAddress(),
+                        registryResult.getDongName(),
+                        registryResult.getHoName()
                 );
         return new RegistryReportData(
                 RegistrySummaryResponse.from(registryResult, rights),

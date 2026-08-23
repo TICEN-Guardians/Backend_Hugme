@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -40,6 +41,18 @@ public class RegistryResult {
 
     @Column(name = "raw_address", length = 255)
     private String rawAddress;
+
+    @Column(name = "dong_name", length = 100)
+    private String dongName;
+
+    @Column(name = "floor")
+    private Integer floor;
+
+    @Column(name = "ho_name", length = 100)
+    private String hoName;
+
+    @Column(name = "exclusive_area", precision = 12, scale = 3)
+    private BigDecimal exclusiveArea;
 
     @Column(name = "issue_date")
     private LocalDate issueDate;

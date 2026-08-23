@@ -17,13 +17,15 @@ class RegistryAddressMatchServiceTest {
     );
 
     @Test
-    void matchesJibunAndRegistryUnitNotation() {
+    void matchesJibunAndStructuredRegistryUnit() {
         RegistryAddressMatchStatus status = service.match(
                 "경기도 수원시 팔달구 덕영대로 691",
                 "107동",
                 "1301호",
                 snapshot,
-                "[집합건물] 경기도 수원시 팔달구 화서동 250-4 화서역 아파트 제107동 제13층 제1301호"
+                "[집합건물] 경기도 수원시 팔달구 화서동 250-4 화서역 아파트",
+                "107동",
+                "1301호"
         );
         assertEquals(RegistryAddressMatchStatus.MATCH, status);
     }
@@ -35,47 +37,55 @@ class RegistryAddressMatchServiceTest {
                 "B동",
                 "203호",
                 Map.of("jibunAddress", "서울특별시 강서구 화곡동 359-20"),
-                "[집합건물] 서울특별시 강서구 화곡동 359-20 제비동 제2층 제203호"
+                "[집합건물] 서울특별시 강서구 화곡동 359-20",
+                "비동",
+                "203호"
         );
         assertEquals(RegistryAddressMatchStatus.MATCH, status);
     }
 
     @Test
-    void matchesRoadAndJibunWhenOfficetelNameIsUsedAsDong() {
+    void matchesOfficetelBuildingSelectionAndStructuredHo() {
         RegistryAddressMatchStatus status = service.match(
                 "인천광역시 미추홀구 주안동로25번길 47-21",
                 "스타캐슬",
                 "602호",
                 Map.of(
                         "roadAddress", "인천광역시 미추홀구 주안동로25번길 47-21",
-                        "jibunAddress", "인천광역시 미추홀구 주안동 75-89"
+                        "jibunAddress", "인천광역시 미추홀구 주안동 75-89",
+                        "buildingName", "스타캐슬"
                 ),
-                "[집합건물] 인천광역시 미추홀구 주안동 75-89 "
-                        + "스타캐슬 제6층 제602호"
+                "[집합건물] 인천광역시 미추홀구 주안동 75-89 스타캐슬",
+                null,
+                "602호"
         );
         assertEquals(RegistryAddressMatchStatus.MATCH, status);
     }
 
     @Test
-    void rejectsDifferentUnitInSameBuilding() {
+    void rejectsDifferentStructuredUnitInSameBuilding() {
         RegistryAddressMatchStatus status = service.match(
                 "경기도 수원시 팔달구 덕영대로 691",
                 "107동",
                 "1302호",
                 snapshot,
-                "[집합건물] 경기도 수원시 팔달구 화서동 250-4 화서역 아파트 제107동 제13층 제1301호"
+                "[집합건물] 경기도 수원시 팔달구 화서동 250-4 화서역 아파트",
+                "107동",
+                "1301호"
         );
         assertEquals(RegistryAddressMatchStatus.MISMATCH, status);
     }
 
     @Test
-    void requiresReviewWhenUnitWasNotRead() {
+    void requiresReviewWhenStructuredUnitWasNotReadEvenIfAddressContainsUnit() {
         RegistryAddressMatchStatus status = service.match(
                 "경기도 수원시 팔달구 덕영대로 691",
                 "107동",
                 "1301호",
                 snapshot,
-                "[집합건물] 경기도 수원시 팔달구 화서동 250-4 화서역 아파트"
+                "[집합건물] 경기도 수원시 팔달구 화서동 250-4 화서역 아파트 제107동 제1301호",
+                null,
+                null
         );
         assertEquals(
                 RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED,
@@ -90,7 +100,9 @@ class RegistryAddressMatchServiceTest {
                 null,
                 null,
                 snapshot,
-                "[집합건물] 경기도 수원시 팔달구 화서동 250-4 화서역 아파트 제107동 제13층 제1301호"
+                "[집합건물] 경기도 수원시 팔달구 화서동 250-4 화서역 아파트",
+                "107동",
+                "1301호"
         );
         assertEquals(
                 RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED,
@@ -105,7 +117,9 @@ class RegistryAddressMatchServiceTest {
                 null,
                 null,
                 snapshot,
-                "[건물] 서울특별시 관악구 신림동 1604-38"
+                "[건물] 서울특별시 관악구 신림동 1604-38",
+                null,
+                null
         );
         assertEquals(RegistryAddressMatchStatus.MISMATCH, status);
     }
@@ -117,7 +131,9 @@ class RegistryAddressMatchServiceTest {
                 null,
                 null,
                 null,
-                "[건물] 서울특별시 관악구 신림동 1604-38"
+                "[건물] 서울특별시 관악구 신림동 1604-38",
+                null,
+                null
         );
         assertEquals(
                 RegistryAddressMatchStatus.PENDING_ADDRESS_CONFIRMATION,
