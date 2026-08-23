@@ -126,6 +126,29 @@ public class DocumentChatService {
             DocumentSearchRequest request
     ) throws Exception {
 
+        if (request.sessionId() == null || request.sessionId().isBlank()) {
+            throw new IllegalArgumentException("채팅 세션 ID가 필요합니다.");
+        }
+        if (request.applicationId() == null) {
+            throw new IllegalArgumentException("신청 ID가 필요합니다.");
+        }
+        getOwnedApplication(userId, request.applicationId());
+        chatHistoryRepository
+                .findByUserUserIdAndSessionIdOrderByCreatedAtAsc(userId, request.sessionId())
+                .stream()
+                .map(DocumentChatHistory::getApplicationId)
+                .filter(existingApplicationId -> existingApplicationId != null)
+                .findFirst()
+                .filter(existingApplicationId -> !existingApplicationId.equals(request.applicationId()))
+                .ifPresent(existingApplicationId -> {
+                    throw new IllegalArgumentException("기존 상담 세션의 신청 정보와 일치하지 않습니다.");
+                });
+        if (!checklistDocumentResultRepository
+                .existsByApplicationApplicationIdAndApplicationUserUserIdAndDocumentDocumentId(
+                        request.applicationId(), userId, request.documentId())) {
+            throw new IllegalArgumentException("해당 신청에 포함된 준비 서류가 아닙니다.");
+        }
+
         long totalStartNanos = System.nanoTime();
         try {
 
@@ -218,6 +241,8 @@ public class DocumentChatService {
 
         chatHistoryRepository.save(DocumentChatHistory.create(
                 user,
+                request.sessionId(),
+                request.applicationId(),
                 request.documentId(),
                 request.question(),
                 response.answer(),
