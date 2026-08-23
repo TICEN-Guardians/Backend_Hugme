@@ -22,6 +22,12 @@ public class DocumentChatHistory {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(name = "session_id", nullable = false, length = 100)
+    private String sessionId;
+
+    @Column(name = "application_id")
+    private Long applicationId;
+
     @Column(name = "document_id")
     private Long documentId;
 
@@ -38,15 +44,17 @@ public class DocumentChatHistory {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    private DocumentChatHistory(User user, Long documentId, String question, String answer, String sources) {
+    private DocumentChatHistory(User user, String sessionId, Long applicationId, Long documentId, String question, String answer, String sources) {
         this.user = user;
+        this.sessionId = sessionId;
+        this.applicationId = applicationId;
         this.documentId = documentId;
         this.question = question;
         this.answer = answer;
         this.sources = sources;
     }
 
-    public static DocumentChatHistory create(User user, Long documentId, String question, String answer, String sources) {
-        return new DocumentChatHistory(user, documentId, question, answer, sources);
+    public static DocumentChatHistory create(User user, String sessionId, Long applicationId, Long documentId, String question, String answer, String sources) {
+        return new DocumentChatHistory(user, sessionId, applicationId, documentId, question, answer, sources);
     }
 }
