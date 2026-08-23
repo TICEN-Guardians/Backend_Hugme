@@ -51,9 +51,10 @@ public class RegistryAddressMatchService {
             return RegistryAddressMatchStatus.MISMATCH;
         }
 
-        RegistryAddressMatchStatus dongStatus = matchUnit(
+        RegistryAddressMatchStatus dongStatus = matchDong(
                 dongName,
-                extractUnits(registryAddress, DONG)
+                extractUnits(registryAddress, DONG),
+                registryAddress
         );
         RegistryAddressMatchStatus hoStatus = matchUnit(
                 hoName,
@@ -105,6 +106,33 @@ public class RegistryAddressMatchService {
         return actual.contains(normalizedExpected)
                 ? RegistryAddressMatchStatus.MATCH
                 : RegistryAddressMatchStatus.MISMATCH;
+    }
+
+    private RegistryAddressMatchStatus matchDong(
+            String expected,
+            Set<String> actual,
+            String registryAddress
+    ) {
+        String normalizedExpected = normalizeUnit(expected);
+        if (normalizedExpected == null) {
+            return actual.isEmpty()
+                    ? RegistryAddressMatchStatus.MATCH
+                    : RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED;
+        }
+        if (actual.contains(normalizedExpected)) {
+            return RegistryAddressMatchStatus.MATCH;
+        }
+        if (!actual.isEmpty()) {
+            return RegistryAddressMatchStatus.MISMATCH;
+        }
+
+        boolean buildingNameMatches = !normalizedExpected.matches("\\d+")
+                && normalizeAddress(registryAddress).contains(
+                normalizedExpected.toLowerCase(Locale.ROOT)
+        );
+        return buildingNameMatches
+                ? RegistryAddressMatchStatus.MATCH
+                : RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED;
     }
 
     private Set<String> extractUnits(String value, Pattern pattern) {
