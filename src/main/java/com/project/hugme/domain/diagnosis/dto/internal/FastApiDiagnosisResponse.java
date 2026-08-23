@@ -1,5 +1,7 @@
 package com.project.hugme.domain.diagnosis.dto.internal;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -14,6 +16,7 @@ public record FastApiDiagnosisResponse(
         MarketComparables marketComparables,
         Valuation valuation,
         Indicators indicators,
+        DepositRecommendation depositRecommendation,
         Risk risk,
         List<String> forcedWarnings,
         List<String> missingChecks,
@@ -75,6 +78,23 @@ public record FastApiDiagnosisResponse(
     ) {
     }
 
+    public record DepositRecommendation(
+            Long recommendedLimit,
+            Long currentDeposit,
+            Long reductionRequired,
+            Boolean withinRecommendedLimit,
+            Integer targetScoreMax,
+            String targetGrade,
+            Integer scoreAtLimit,
+            String calculationBasis,
+            Boolean registryReflected,
+            Boolean provisional,
+            Boolean adjustmentCanResolveFinalRisk,
+            List<String> unresolvedRiskReasons
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Risk(
             Integer score,
             Integer baseScore,
@@ -93,7 +113,11 @@ public record FastApiDiagnosisResponse(
             Integer leaseMarketDeviation,
             Integer marketTrend,
             Integer policyAdjustment,
-            Integer rightsAdjustment
+            Integer rightsAdjustment,
+            Integer underwater,
+            Integer rollover,
+            Integer property,
+            Integer market
     ) {
     }
 
@@ -101,7 +125,11 @@ public record FastApiDiagnosisResponse(
             Integer priceBurden,
             Integer leaseMarketDeviation,
             Integer marketTrend,
-            Integer total
+            Integer total,
+            Integer underwater,
+            Integer rollover,
+            Integer property,
+            Integer market
     ) {
     }
 
