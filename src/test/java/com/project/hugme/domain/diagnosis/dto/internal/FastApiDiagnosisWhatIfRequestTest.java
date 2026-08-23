@@ -66,13 +66,21 @@ class FastApiDiagnosisWhatIfRequestTest {
                                 31,
                                 3,
                                 0,
-                                31
+                                31,
+                                null,
+                                null,
+                                null,
+                                null
                         ),
                         new FastApiDiagnosisResponse.Weights(
                                 45,
                                 45,
                                 10,
-                                100
+                                100,
+                                null,
+                                null,
+                                null,
+                                null
                         ),
                         80,
                         List.of("OWNER_MISMATCH"),

@@ -92,4 +92,40 @@ class FastApiDiagnosisResponseTest {
         assertThat(response.marketComparables().median()).isEqualTo(210000000L);
         assertThat(response.marketComparables().bins()).hasSize(1);
     }
+
+    @Test
+    void deserializesLegacyRiskBreakdown() throws Exception {
+        String json = """
+                {
+                  "risk": {
+                    "score": 53,
+                    "grade": "HIGH",
+                    "gradeOverridden": false,
+                    "breakdown": {
+                      "underwater": 28,
+                      "rollover": 24,
+                      "property": 0,
+                      "market": 3
+                    },
+                    "weights": {
+                      "underwater": 47,
+                      "rollover": 35,
+                      "property": 10,
+                      "market": 8,
+                      "total": 100
+                    }
+                  }
+                }
+                """;
+
+        FastApiDiagnosisResponse response = objectMapper.readValue(
+                json,
+                FastApiDiagnosisResponse.class
+        );
+
+        assertThat(response.risk().breakdown().underwater()).isEqualTo(28);
+        assertThat(response.risk().breakdown().rollover()).isEqualTo(24);
+        assertThat(response.risk().weights().property()).isEqualTo(10);
+        assertThat(response.risk().weights().market()).isEqualTo(8);
+    }
 }
