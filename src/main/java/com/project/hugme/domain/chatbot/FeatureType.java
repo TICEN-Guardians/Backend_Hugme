@@ -7,7 +7,7 @@ public enum FeatureType {
             "사용자가 입력한 특정 매물이나 계약 정보를 바탕으로 전세 사기 위험도를 진단·판정해주는 기능. " +
                     "일반적인 예방 지식이나 확인 방법을 묻는 질문은 이 기능이 아님."),
     DOCUMENT_GUIDE(
-            "서류 안내",
+            "보증가입 체크리스트",
             "/imsi-guide",
             "특정 HUG 보증상품의 자격요건을 바탕으로, 그 상품 신청에 필요한 제출 서류 체크리스트를 " +
                     "안내하고 준비 여부를 체크해주는 기능. '이 상품 신청에 어떤 서류가 필요한지' 같은 " +
@@ -28,4 +28,13 @@ public enum FeatureType {
     public String label() { return label; }
     public String path() { return path; }
     public String description() { return description; }
+
+    // "위험도 진단으로", "보증가입 체크리스트로"처럼 받침 유무에 따라 "으로"/"로" 조사를
+    // 자동으로 붙인다. 라벨 문구가 바뀌어도 조사가 깨지지 않도록 하기 위함.
+    public String labelWithDirectionParticle() {
+        char lastChar = label.charAt(label.length() - 1);
+        boolean hasBatchim = lastChar >= 0xAC00 && lastChar <= 0xD7A3
+                && (lastChar - 0xAC00) % 28 != 0;
+        return label + (hasBatchim ? "으로" : "로");
+    }
 }

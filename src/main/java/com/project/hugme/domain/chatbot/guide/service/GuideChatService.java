@@ -53,7 +53,7 @@ public class GuideChatService {
                 return response;
             }
             FeatureType feature = route.featureType();
-            String answer = "해당 요청은 " + feature.label() + " 기능이에요. " + feature.label() + "으로 이동하시겠어요?";
+            String answer = "해당 요청은 " + feature.label() + " 기능이에요. " + feature.labelWithDirectionParticle() + " 이동하시겠어요?";
             RedirectDto redirect = new RedirectDto(feature.name(), feature.label(), feature.path());
             ChatResponse response = new ChatResponse(
                     sessionId, answer, route.category(), List.of(), List.of(), redirect
@@ -119,8 +119,6 @@ public class GuideChatService {
         return response;
     }
 
-    // feature/off_topic 답변은 chatClient를 거치지 않아 MessageChatMemoryAdvisor가 자동으로 기록해주지 않으므로 직접 기록한다.
-    // meta는 metaAnswerService가 chatClient를 통해 이미 기록하므로 여기서 다시 호출하지 않는다.
     private void rememberTurn(String sessionId, String question, String answer) {
         chatMemory.add(sessionId, List.of(new UserMessage(question), new AssistantMessage(answer)));
     }
@@ -140,7 +138,6 @@ public class GuideChatService {
         guideChatHistoryRepository.save(GuideChatHistory.create(
                 user, sessionId, response.category(), question, response.answer(), sourcesJoined
         ));
-        guideSessionService.pruneOldSessions(userId);
     }
 
     private String resolveSessionId(ChatRequest request) {
