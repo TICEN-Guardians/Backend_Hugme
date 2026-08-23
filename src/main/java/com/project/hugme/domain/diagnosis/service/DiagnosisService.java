@@ -352,6 +352,14 @@ public class DiagnosisService {
             FastApiDiagnosisWhatIfRequest request
     ) {
         if (diagnosis.getMode() == DiagnosisMode.QUICK
+                && request.scenarioActiveMaxClaimAmount() != null) {
+            throw error(
+                    HttpStatus.BAD_REQUEST,
+                    "MORTGAGE_SCENARIO_NOT_ALLOWED",
+                    "간편진단에는 선순위 근저당 조정 가정을 적용할 수 없습니다."
+            );
+        }
+        if (diagnosis.getMode() == DiagnosisMode.QUICK
                 && request.removeActiveMortgage()) {
             throw error(
                     HttpStatus.BAD_REQUEST,
