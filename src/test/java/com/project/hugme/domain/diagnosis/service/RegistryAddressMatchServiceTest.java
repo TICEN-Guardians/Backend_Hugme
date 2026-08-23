@@ -63,6 +63,23 @@ class RegistryAddressMatchServiceTest {
     }
 
     @Test
+    void ignoresLegalDongMisreadWhenOfficetelBuildingNameWasSelected() {
+        RegistryAddressMatchStatus status = service.match(
+                "인천광역시 미추홀구 주안동로25번길 47-21 (주안동)",
+                "스타캐슬",
+                "602",
+                Map.of(
+                        "roadAddress", "인천광역시 미추홀구 주안동로25번길 47-21 (주안동)",
+                        "jibunAddress", "인천광역시 미추홀구 주안동 75-89",
+                        "buildingName", "스타캐슬"
+                ),
+                "인천광역시 미추홀구 주안동 75-89 스타캐슬 제6층 제602호",
+                "주안",
+                "602"
+        );
+        assertEquals(RegistryAddressMatchStatus.MATCH, status);
+    }
+    @Test
     void rejectsDifferentStructuredUnitInSameBuilding() {
         RegistryAddressMatchStatus status = service.match(
                 "경기도 수원시 팔달구 덕영대로 691",

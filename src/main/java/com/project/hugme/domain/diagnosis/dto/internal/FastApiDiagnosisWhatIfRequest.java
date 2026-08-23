@@ -14,6 +14,7 @@ public record FastApiDiagnosisWhatIfRequest(
         Integer salePriceDropRate,
         Integer leasePriceDropRate,
         Long activeMaxClaimAmount,
+        Long scenarioActiveMaxClaimAmount,
         boolean removeActiveMortgage,
         Integer marketTrendScore,
         List<String> unresolvedRiskReasons
@@ -36,6 +37,7 @@ public record FastApiDiagnosisWhatIfRequest(
                 request.salePriceDropRate(),
                 request.leasePriceDropRate(),
                 activeMaxClaimAmount,
+                request.activeMaxClaimAmount(),
                 request.removeActiveMortgage(),
                 response.risk().breakdown().marketTrend(),
                 response.forcedWarnings() == null

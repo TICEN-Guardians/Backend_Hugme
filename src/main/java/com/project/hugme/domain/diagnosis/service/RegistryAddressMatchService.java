@@ -119,16 +119,15 @@ public class RegistryAddressMatchService {
                     ? RegistryAddressMatchStatus.MATCH
                     : RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED;
         }
+        if (isBuildingNameSelection(expected, normalizedExpected, propertySnapshot)) {
+            return RegistryAddressMatchStatus.MATCH;
+        }
         if (normalizedExpected.equals(normalizedActual)) {
             return RegistryAddressMatchStatus.MATCH;
         }
-        if (normalizedActual != null) {
-            return RegistryAddressMatchStatus.MISMATCH;
-        }
-
-        return isBuildingNameSelection(expected, normalizedExpected, propertySnapshot)
-                ? RegistryAddressMatchStatus.MATCH
-                : RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED;
+        return normalizedActual == null
+                ? RegistryAddressMatchStatus.PARTIAL_MATCH_REVIEW_REQUIRED
+                : RegistryAddressMatchStatus.MISMATCH;
     }
 
     private boolean isBuildingNameSelection(

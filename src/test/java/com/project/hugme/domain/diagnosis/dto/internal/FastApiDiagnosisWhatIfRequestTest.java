@@ -99,6 +99,7 @@ class FastApiDiagnosisWhatIfRequestTest {
                 180000000L,
                 10,
                 5,
+                70000000L,
                 true
         );
 
@@ -112,6 +113,8 @@ class FastApiDiagnosisWhatIfRequestTest {
         assertThat(result.baselineDeposit()).isEqualTo(200000000L);
         assertThat(result.scenarioDeposit()).isEqualTo(180000000L);
         assertThat(result.activeMaxClaimAmount()).isEqualTo(100000000L);
+        assertThat(result.scenarioActiveMaxClaimAmount())
+                .isEqualTo(70000000L);
         assertThat(result.marketTrendScore()).isEqualTo(3);
         assertThat(result.unresolvedRiskReasons())
                 .containsExactly("OWNER_MISMATCH");
