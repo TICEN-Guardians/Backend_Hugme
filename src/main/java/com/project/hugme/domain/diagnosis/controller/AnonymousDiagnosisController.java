@@ -1,9 +1,11 @@
 package com.project.hugme.domain.diagnosis.controller;
 
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisResponse;
+import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisWhatIfResponse;
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisAddressRequest;
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisCreateRequest;
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisDetailsRequest;
+import com.project.hugme.domain.diagnosis.dto.request.DiagnosisWhatIfRequest;
 import com.project.hugme.domain.diagnosis.dto.response.DiagnosisCreateResponse;
 import com.project.hugme.domain.diagnosis.dto.response.DiagnosisReportResponse;
 import com.project.hugme.domain.diagnosis.service.DiagnosisService;
@@ -63,6 +65,22 @@ public class AnonymousDiagnosisController {
     ) {
         return ResponseEntity.ok(
                 diagnosisService.analyzeDiagnosis(null, analysisId, accessToken)
+        );
+    }
+
+    @PostMapping("/{analysisId}/scenarios")
+    public ResponseEntity<FastApiDiagnosisWhatIfResponse> calculateWhatIf(
+            @PathVariable Long analysisId,
+            @RequestHeader("X-Diagnosis-Token") String accessToken,
+            @Valid @RequestBody DiagnosisWhatIfRequest request
+    ) {
+        return ResponseEntity.ok(
+                diagnosisService.calculateWhatIf(
+                        null,
+                        analysisId,
+                        accessToken,
+                        request
+                )
         );
     }
 

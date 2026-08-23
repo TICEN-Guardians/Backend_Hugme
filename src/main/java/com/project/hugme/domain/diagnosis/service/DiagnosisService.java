@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiAddressSuggestionRequest;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiAddressSuggestionResponse;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisRequest;
+import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisWhatIfRequest;
+import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisWhatIfResponse;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisResponse;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertyResolveRequest;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertyResolveResponse;
@@ -16,6 +18,7 @@ import com.project.hugme.domain.diagnosis.dto.request.AddressSuggestionRequest;
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisAddressRequest;
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisCreateRequest;
 import com.project.hugme.domain.diagnosis.dto.request.DiagnosisDetailsRequest;
+import com.project.hugme.domain.diagnosis.dto.request.DiagnosisWhatIfRequest;
 import com.project.hugme.domain.diagnosis.dto.request.PropertyResolveRequest;
 import com.project.hugme.domain.diagnosis.dto.request.PropertySearchRequest;
 import com.project.hugme.domain.diagnosis.dto.response.*;
@@ -213,12 +216,15 @@ public class DiagnosisService {
         validateRegistryFiles(files);
         FastApiRegistryResponse response =
                 fastApiDiagnosisClient.uploadRegistry(analysisId, files);
+        FastApiRegistryResponse.OwnerInfo ownerInfo = response.ownerInfo();
         RegistryAddressMatchStatus addressMatchStatus = registryAddressMatchService.match(
                 diagnosis.getAddress(),
                 diagnosis.getDongName(),
                 diagnosis.getHoName(),
                 readPropertySnapshot(diagnosis.getPropertySnapshot()),
-                response.ownerInfo() == null ? null : response.ownerInfo().propertyAddress()
+                ownerInfo == null ? null : ownerInfo.propertyAddress(),
+                ownerInfo == null ? null : ownerInfo.dongName(),
+                ownerInfo == null ? null : ownerInfo.hoName()
         );
         boolean successful = response.ownerInfo() != null
                 && "SUCCESS".equalsIgnoreCase(response.ownerInfo().parseStatus())
@@ -254,7 +260,9 @@ public class DiagnosisService {
                             diagnosis.getDongName(),
                             diagnosis.getHoName(),
                             readPropertySnapshot(diagnosis.getPropertySnapshot()),
-                            registryResult.getRawAddress()
+                            registryResult.getRawAddress(),
+                            registryResult.getDongName(),
+                            registryResult.getHoName()
                     ),
                     diagnosis.isRegistryAddressReviewConfirmed()
             );
@@ -303,9 +311,69 @@ public class DiagnosisService {
                         "DIAGNOSIS_RESULT_NOT_READY",
                         "완료된 진단 결과가 없습니다."
                 ));
-        FastApiDiagnosisResponse response;
+        FastApiDiagnosisResponse response = readDiagnosisResponse(result);
+        RegistryReportData registry = diagnosis.getMode() == DiagnosisMode.DETAILED
+                ? findRegistryReportData(diagnosis)
+                : new RegistryReportData(null, null);
+        return DiagnosisReportResponse.of(
+                response,
+                registry.summary(),
+                registry.verification()
+        );
+    }
+
+    public FastApiDiagnosisWhatIfResponse calculateWhatIf(
+            Long userId,
+            Long analysisId,
+            String accessToken,
+            DiagnosisWhatIfRequest request
+    ) {
+        Diagnosis diagnosis = findAccessible(userId, analysisId, accessToken);
+        DiagnosisResult result = diagnosisResultRepository
+                .findByDiagnosisAnalysisId(analysisId)
+                .orElseThrow(() -> error(
+                        HttpStatus.CONFLICT,
+                        "DIAGNOSIS_RESULT_NOT_READY",
+                        "완료된 진단 결과가 없습니다."
+                ));
+        FastApiDiagnosisResponse response = readDiagnosisResponse(result);
+        FastApiDiagnosisWhatIfRequest fastApiRequest =
+                FastApiDiagnosisWhatIfRequest.from(
+                        diagnosis,
+                        response,
+                        request
+                );
+        validateWhatIfRequest(diagnosis, fastApiRequest);
+        return fastApiDiagnosisClient.calculateWhatIf(fastApiRequest);
+    }
+
+    private void validateWhatIfRequest(
+            Diagnosis diagnosis,
+            FastApiDiagnosisWhatIfRequest request
+    ) {
+        if (diagnosis.getMode() == DiagnosisMode.QUICK
+                && request.removeActiveMortgage()) {
+            throw error(
+                    HttpStatus.BAD_REQUEST,
+                    "MORTGAGE_SCENARIO_NOT_ALLOWED",
+                    "간편진단에는 선순위 근저당 말소 가정을 적용할 수 없습니다."
+            );
+        }
+        if (request.removeActiveMortgage()
+                && request.activeMaxClaimAmount() == null) {
+            throw error(
+                    HttpStatus.CONFLICT,
+                    "ACTIVE_MORTGAGE_NOT_CONFIRMED",
+                    "말소를 가정할 활성 선순위 근저당을 확인하지 못했습니다."
+            );
+        }
+    }
+
+    private FastApiDiagnosisResponse readDiagnosisResponse(
+            DiagnosisResult result
+    ) {
         try {
-            response = JSON_MAPPER.readValue(
+            return JSON_MAPPER.readValue(
                     result.getResponseJson(),
                     FastApiDiagnosisResponse.class
             );
@@ -315,14 +383,6 @@ public class DiagnosisService {
                     exception
             );
         }
-        RegistryReportData registry = diagnosis.getMode() == DiagnosisMode.DETAILED
-                ? findRegistryReportData(diagnosis)
-                : new RegistryReportData(null, null);
-        return DiagnosisReportResponse.of(
-                response,
-                registry.summary(),
-                registry.verification()
-        );
     }
 
     private Diagnosis findAccessible(
@@ -435,7 +495,9 @@ public class DiagnosisService {
                 dongName,
                 hoName,
                 propertySnapshot,
-                registryResult.getRawAddress()
+                registryResult.getRawAddress(),
+                registryResult.getDongName(),
+                registryResult.getHoName()
         );
         ensureRegistryAddressMatched(status, reviewConfirmed);
         return new RegistryAddressValidation(
@@ -527,7 +589,9 @@ public class DiagnosisService {
                         diagnosis.getDongName(),
                         diagnosis.getHoName(),
                         readPropertySnapshot(diagnosis.getPropertySnapshot()),
-                        registryResult.getRawAddress()
+                        registryResult.getRawAddress(),
+                        registryResult.getDongName(),
+                        registryResult.getHoName()
                 );
         return new RegistryReportData(
                 RegistrySummaryResponse.from(registryResult, rights),

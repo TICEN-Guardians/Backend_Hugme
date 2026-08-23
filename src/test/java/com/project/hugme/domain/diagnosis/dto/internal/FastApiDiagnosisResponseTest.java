@@ -33,6 +33,20 @@ class FastApiDiagnosisResponseTest {
                     ],
                     "warnings": []
                   },
+                  "depositRecommendation": {
+                    "recommendedLimit": 189000000,
+                    "currentDeposit": 200000000,
+                    "reductionRequired": 11000000,
+                    "withinRecommendedLimit": false,
+                    "targetScoreMax": 25,
+                    "targetGrade": "LOW",
+                    "scoreAtLimit": 14,
+                    "calculationBasis": "PRICE_MARKET_ONLY",
+                    "registryReflected": false,
+                    "provisional": true,
+                    "adjustmentCanResolveFinalRisk": false,
+                    "unresolvedRiskReasons": ["OWNER_MISMATCH"]
+                  },
                   "risk": {
                     "score": 80,
                     "baseScore": 23,
@@ -63,6 +77,12 @@ class FastApiDiagnosisResponseTest {
                 FastApiDiagnosisResponse.class
         );
 
+        assertThat(response.depositRecommendation().recommendedLimit())
+                .isEqualTo(189000000L);
+        assertThat(response.depositRecommendation().targetGrade())
+                .isEqualTo("LOW");
+        assertThat(response.depositRecommendation().unresolvedRiskReasons())
+                .containsExactly("OWNER_MISMATCH");
         assertThat(response.risk().score()).isEqualTo(80);
         assertThat(response.risk().baseScore()).isEqualTo(23);
         assertThat(response.risk().breakdown().rightsAdjustment()).isEqualTo(57);
@@ -71,5 +91,41 @@ class FastApiDiagnosisResponseTest {
         assertThat(response.marketComparables().sampleCount()).isEqualTo(12);
         assertThat(response.marketComparables().median()).isEqualTo(210000000L);
         assertThat(response.marketComparables().bins()).hasSize(1);
+    }
+
+    @Test
+    void deserializesLegacyRiskBreakdown() throws Exception {
+        String json = """
+                {
+                  "risk": {
+                    "score": 53,
+                    "grade": "HIGH",
+                    "gradeOverridden": false,
+                    "breakdown": {
+                      "underwater": 28,
+                      "rollover": 24,
+                      "property": 0,
+                      "market": 3
+                    },
+                    "weights": {
+                      "underwater": 47,
+                      "rollover": 35,
+                      "property": 10,
+                      "market": 8,
+                      "total": 100
+                    }
+                  }
+                }
+                """;
+
+        FastApiDiagnosisResponse response = objectMapper.readValue(
+                json,
+                FastApiDiagnosisResponse.class
+        );
+
+        assertThat(response.risk().breakdown().underwater()).isEqualTo(28);
+        assertThat(response.risk().breakdown().rollover()).isEqualTo(24);
+        assertThat(response.risk().weights().property()).isEqualTo(10);
+        assertThat(response.risk().weights().market()).isEqualTo(8);
     }
 }

@@ -4,6 +4,8 @@ import com.project.hugme.domain.diagnosis.dto.internal.FastApiAddressSuggestionR
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiAddressSuggestionResponse;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisRequest;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisResponse;
+import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisWhatIfRequest;
+import com.project.hugme.domain.diagnosis.dto.internal.FastApiDiagnosisWhatIfResponse;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertyResolveRequest;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertyResolveResponse;
 import com.project.hugme.domain.diagnosis.dto.internal.FastApiPropertySearchRequest;
@@ -84,6 +86,23 @@ public class FastApiDiagnosisClient {
                 .body(FastApiDiagnosisResponse.class);
         if (response == null) {
             throw new IllegalStateException("FastAPI 진단 응답이 없습니다.");
+        }
+        return response;
+    }
+
+    public FastApiDiagnosisWhatIfResponse calculateWhatIf(
+            FastApiDiagnosisWhatIfRequest request
+    ) {
+        FastApiDiagnosisWhatIfResponse response = restClient.post()
+                .uri("/internal/v1/diagnoses/what-if")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .retrieve()
+                .body(FastApiDiagnosisWhatIfResponse.class);
+        if (response == null) {
+            throw new IllegalStateException(
+                    "FastAPI What-if 응답이 없습니다."
+            );
         }
         return response;
     }
