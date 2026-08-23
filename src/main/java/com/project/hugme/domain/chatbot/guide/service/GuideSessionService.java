@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class GuideSessionService {
 
-    private static final int MAX_SESSIONS_PER_USER = 10;
+    private static final int MAX_SESSIONS_RETURNED = 20;
 
     private final GuideChatHistoryRepository guideChatHistoryRepository;
     private final ChatMemory chatMemory;
@@ -45,6 +45,7 @@ public class GuideSessionService {
                     );
                 })
                 .sorted(Comparator.comparing(SessionSummaryDto::lastMessageAt).reversed())
+                .limit(MAX_SESSIONS_RETURNED)
                 .toList();
     }
 
@@ -62,26 +63,6 @@ public class GuideSessionService {
         chatMemory.clear(sessionId);
     }
 
-    /**
-     * 세션이 MAX_SESSIONS_PER_USER개를 넘으면 가장 오래된(최근 메시지 기준) 세션부터 정리한다.
-     * 새 세션의 첫 메시지가 저장된 직후에만 호출해도 충분하다.
-     */
-    @Transactional
-    public void pruneOldSessions(Long userId) {
-        List<SessionSummaryDto> sessions = listSessions(userId);
-        if (sessions.size() <= MAX_SESSIONS_PER_USER) {
-            return;
-        }
-
-        sessions.stream()
-                .skip(MAX_SESSIONS_PER_USER)
-                .forEach(session -> deleteSession(userId, session.sessionId()));
-    }
-
-    /**
-     * 인메모리 ChatMemory가 비어있는데 DB에는 해당 세션 이력이 있으면(서버 재시작, 다른 세션에서 재진입 등)
-     * DB 이력을 다시 채워 넣어 LLM이 맥락을 이어갈 수 있게 한다.
-     */
     public void rehydrateMemoryIfNeeded(Long userId, String sessionId) {
         if (userId == null || !chatMemory.get(sessionId).isEmpty()) {
             return;

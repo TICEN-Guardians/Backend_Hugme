@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class MetaAnswerService {
 
-    private final ChatClient chatClient;  // conversationalChatClient
+    private final ChatClient chatClient;
 
     public String generate(String sessionId, String query) {
         String prompt = """

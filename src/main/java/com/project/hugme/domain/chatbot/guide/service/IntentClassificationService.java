@@ -150,7 +150,6 @@ public class IntentClassificationService {
 
             FeatureType featureType = parseFeatureType(raw.featureType());
 
-            // rewrittenQuery가 비어있거나 누락되면 원문으로 안전하게 폴백
             String rewrittenQuery = (raw.rewrittenQuery() == null || raw.rewrittenQuery().isBlank())
                     ? query
                     : raw.rewrittenQuery();
@@ -161,7 +160,6 @@ public class IntentClassificationService {
             return result;
         } catch (Exception e) {
             log.error("라우팅 실패, 기본값으로 폴백: {}", query, e);
-            // rewrittenQuery도 반드시 채워야 컴파일 및 이후 search() 호출이 안전함
             return new RouteResult("product", null, query);
         }
     }
