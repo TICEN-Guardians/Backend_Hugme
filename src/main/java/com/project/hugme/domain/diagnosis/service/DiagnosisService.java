@@ -455,11 +455,11 @@ public class DiagnosisService {
     }
 
     private void validateRegistryFiles(List<MultipartFile> files) {
-        if (files == null || files.isEmpty() || files.size() > 2) {
+        if (files == null || files.size() != 1) {
             throw error(
                     HttpStatus.BAD_REQUEST,
                     "REGISTRY_FILE_COUNT_INVALID",
-                    "등기부등본 PDF를 1개 또는 토지·건물 PDF 2개로 첨부해 주세요."
+                    "등기부등본 PDF 1개만 첨부해 주세요."
             );
         }
         if (files.stream().anyMatch(MultipartFile::isEmpty)) {
